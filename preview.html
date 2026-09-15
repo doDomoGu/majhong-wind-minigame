@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>立直麻将 · 风向盘 预览</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="game"></canvas>
+    <script type="module">
+      window.GameGlobal = window;
+      window.wx = {
+        createCanvas() {
+          return document.getElementById('game');
+        },
+        getWindowInfo() {
+          return {
+            screenWidth: window.innerWidth,
+            screenHeight: window.innerHeight,
+          };
+        },
+        getSystemInfoSync() {
+          return this.getWindowInfo();
+        },
+      };
+
+      import('./game.js');
+    </script>
+  </body>
+</html>
