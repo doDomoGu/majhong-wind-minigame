@@ -1,4 +1,3 @@
-import { createGameCanvas, renderWelcome } from './js/main.js';
+import { startApp } from './js/app.js';
 
-const canvas = createGameCanvas();
-renderWelcome(canvas);
+startApp();

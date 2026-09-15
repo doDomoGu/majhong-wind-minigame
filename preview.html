@@ -33,6 +33,7 @@
           return {
             screenWidth: window.innerWidth,
             screenHeight: window.innerHeight,
+            pixelRatio: window.devicePixelRatio || 1,
           };
         },
         getSystemInfoSync() {
