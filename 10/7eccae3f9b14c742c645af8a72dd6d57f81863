@@ -1,0 +1,58 @@
+js/screens/waiting.js
+  s_3d8a9b9be36981::t_32cd85d9ee7c88 1-26,30-32,34-41,43-81,83-87,89-110
+  s_3d8a9b9be36981::t_de90cec7c581d0 42
+  s_3d8a9b9be36981::t_96c7fa6fabf860 27-29,33
+  s_3d8a9b9be36981::t_ee3e3868eb652f 82,88
+js/session.js
+  s_3d8a9b9be36981::t_7592453f9b05eb 1-14
+js/screens/lobby.js
+  s_3d8a9b9be36981::t_749097b96f14ba 46-48,52,57-58,67,69
+  s_3d8a9b9be36981::t_04b126cf7772a0 1-38,40-45,49-51,53-56,59-66,68,70-124,126-139,144-145,147-182
+  s_3d8a9b9be36981::t_232977775da84c 39
+  s_3d8a9b9be36981::t_50b888408679b6 125,140-143,146
+js/keypad.js
+  s_3d8a9b9be36981::t_643da27fbfb481 1-129
+js/ui.js
+  s_3d8a9b9be36981::t_a697643c9c2621 1-86,95
+  s_3d8a9b9be36981::t_6ca979c5249a57 87-94
+js/main.js
+  s_3d8a9b9be36981::t_9eca84de946139 1
+game.js
+  s_3d8a9b9be36981::t_fa175c7531f372 1,3
+js/rooms.js
+  s_3d8a9b9be36981::t_d20deba3869e53 1-208
+js/theme.js
+  s_3d8a9b9be36981::t_bbd335621b596e 1-35
+js/screens/table.js
+  s_3d8a9b9be36981::t_5b50b7e08a4f34 27-28,30,34,40
+  s_3d8a9b9be36981::t_9d6087841cd21d 1-26,29,31-33,35-39,41-52,55,60-77,79-98
+  s_3d8a9b9be36981::t_334432aeb2f961 53,56-59
+  s_3d8a9b9be36981::t_88531d36df1151 54
+  s_3d8a9b9be36981::t_6e3d6c1707d677 78
+js/app.js
+  s_3d8a9b9be36981::t_bb49b7fdbcf770 1-11,13-17,20,25-164,168-188
+  s_3d8a9b9be36981::t_a3727718ce07e7 12
+  s_3d8a9b9be36981::t_c2da139990996d 18-19,21-24
+  s_3d8a9b9be36981::t_678914c93a6ce6 165-167
+preview.html
+  s_3d8a9b9be36981::t_d37665c9da8fd4 36
+js/platform.js
+  s_3d8a9b9be36981::t_39e9a433b5e5e2 71,80,96-97,99-102
+  s_3d8a9b9be36981::t_d64b4f2fbdae27 1-70,72-79,81-95,98,103-137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "107eccae3f9b14c742c645af8a72dd6d57f81863",
+  "prompts": {},
+  "sessions": {
+    "s_3d8a9b9be36981": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "08427dab-4344-4239-9b40-2cfc9130b0c4",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
