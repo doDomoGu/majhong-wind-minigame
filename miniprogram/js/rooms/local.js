@@ -19,6 +19,26 @@ function cloneRoom(room) {
   };
 }
 
+function isBot(player) {
+  return !!(player && player.id && String(player.id).indexOf('bot-') === 0);
+}
+
+function removePlayerAndBots(room, userId) {
+  room.players = room.players.filter((player) => player.id !== userId && !isBot(player));
+  if (room.seats) {
+    Object.keys(room.seats).forEach((wind) => {
+      const seatId = room.seats[wind];
+      if (!seatId || seatId === userId || String(seatId).indexOf('bot-') === 0) {
+        room.seats[wind] = null;
+      }
+    });
+  }
+  if (room.status === ROOM_STATUS.playing && room.players.length < 4) {
+    room.status = ROOM_STATUS.waiting;
+    room.seats = null;
+  }
+}
+
 function startRoom(room) {
   const shuffled = [...room.players].sort(() => Math.random() - 0.5);
   room.seats = {
@@ -165,14 +185,7 @@ export async function leaveRoom(id, userId) {
     return { dissolved: true, room: null };
   }
 
-  room.players = room.players.filter((player) => player.id !== userId);
-  if (room.seats) {
-    Object.keys(room.seats).forEach((wind) => {
-      if (room.seats[wind] === userId) {
-        room.seats[wind] = null;
-      }
-    });
-  }
+  removePlayerAndBots(room, userId);
 
   if (room.players.length === 0) {
     rooms.delete(room.id);
@@ -182,24 +195,51 @@ export async function leaveRoom(id, userId) {
   return { dissolved: false, room: cloneRoom(room) };
 }
 
-export async function addTestPlayers(id) {
+export async function addTestPlayers(id, userId) {
   const room = rooms.get(String(id));
   if (!room) {
     throw new Error('房间不存在');
   }
+  if (room.status !== ROOM_STATUS.waiting) {
+    throw new Error('对局已开始');
+  }
+  if (userId && !room.players.some((player) => player.id === userId)) {
+    throw new Error('你不在这个房间');
+  }
+
   const names = ['测试南家', '测试西家', '测试北家'];
+  const used = new Set(room.players.map((player) => player.id));
   let index = 0;
   while (room.players.length < 4 && index < names.length) {
-    room.players.push({
-      id: 'bot-' + room.id + '-' + index,
-      name: names[index],
-    });
+    const botId = 'bot-' + room.id + '-' + index;
+    if (!used.has(botId)) {
+      room.players.push({
+        id: botId,
+        name: names[index],
+        avatar: '',
+      });
+      used.add(botId);
+    }
     index += 1;
   }
   if (room.players.length === 4) {
     startRoom(room);
   }
   return cloneRoom(room);
+}
+
+export function renamePlayer(userId, name) {
+  rooms.forEach((room) => {
+    room.players = room.players.map((player) => {
+      if (player.id !== userId) {
+        return player;
+      }
+      return { ...player, name };
+    });
+    if (room.hostId === userId) {
+      room.hostName = name;
+    }
+  });
 }
 
 export function watchRoom() {

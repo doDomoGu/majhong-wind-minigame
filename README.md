@@ -12,16 +12,17 @@
 ## 源码目录
 
 ```
-├── cloudfunctions             // 云函数 login / room
-├── js                         // 客户端
-├── game.js                    // 入口
-├── game.json
-├── preview.html               // 浏览器画面预览
-├── 云开发.md                  // 开通与部署步骤
+├── miniprogram                // 小游戏源码（miniprogramRoot）
+│   ├── js
+│   ├── game.js
+│   ├── game.json
+│   └── preview.html           // 浏览器画面预览
+├── cloudfunctions             // 云函数 login / room（不进小游戏包）
+├── 云开发.md
 └── project.config.json
 ```
 
 ## 如何预览
 
 - **四人同房**：微信开发者工具打开本目录，按 [云开发.md](./云开发.md) 开通环境、部署云函数。
-- **只看画面**：打开 `preview.html`，不连云。
+- **只看画面**：打开 `miniprogram/preview.html`，不连云。

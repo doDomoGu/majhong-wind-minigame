@@ -50,11 +50,19 @@ export async function leaveRoom(id) {
 }
 
 export async function addTestPlayers(id) {
-  const result = unwrap(await callCloud('room', {
-    action: 'fillBots',
-    code: String(id),
-  }));
-  return result.room;
+  try {
+    const result = unwrap(await callCloud('room', {
+      action: 'fillBots',
+      code: String(id),
+    }));
+    return result.room;
+  } catch (error) {
+    const message = error && error.message;
+    if (message === '未知操作') {
+      throw new Error('请重新上传并部署 room 云函数后再试补齐');
+    }
+    throw error;
+  }
 }
 
 export function watchRoom(id, onChange) {

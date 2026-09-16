@@ -32,11 +32,36 @@ export async function initCloud() {
   }
 }
 
+function formatCloudError(name, error) {
+  const raw = (error && (error.errMsg || error.message)) || '';
+  if (/FUNCTION_NOT_FOUND|FunctionName|not found|找不到/i.test(raw)) {
+    return '请先上传并部署 ' + name + ' 云函数';
+  }
+  return raw || ('调用 ' + name + ' 失败');
+}
+
 export async function callCloud(name, data) {
   if (!ready) {
     throw new Error('云开发未就绪');
   }
-  const res = await wx.cloud.callFunction({ name, data: data || {} });
+
+  let res;
+  try {
+    res = await new Promise((resolve, reject) => {
+      wx.cloud.callFunction({
+        name,
+        data: data || {},
+        success: resolve,
+        fail: reject,
+      });
+    });
+  } catch (error) {
+    throw new Error(formatCloudError(name, error));
+  }
+
+  if (!res || res.result === undefined || res.result === null) {
+    throw new Error('云函数 ' + name + ' 无返回，请先上传并部署');
+  }
   return res.result;
 }
 

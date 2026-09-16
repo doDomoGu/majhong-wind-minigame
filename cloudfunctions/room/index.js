@@ -3,6 +3,7 @@ const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
+const _ = db.command;
 
 function fail(error) {
   return { ok: false, error };
@@ -27,6 +28,26 @@ function normalize(doc) {
   };
 }
 
+function isBot(player) {
+  return !!(player && player.id && String(player.id).indexOf('bot-') === 0);
+}
+
+function removePlayerAndBots(room, userId) {
+  room.players = room.players.filter((player) => player.id !== userId && !isBot(player));
+  if (room.seats) {
+    Object.keys(room.seats).forEach((wind) => {
+      const seatId = room.seats[wind];
+      if (!seatId || seatId === userId || String(seatId).indexOf('bot-') === 0) {
+        room.seats[wind] = null;
+      }
+    });
+  }
+  if (room.status === 'playing' && room.players.length < 4) {
+    room.status = 'waiting';
+    room.seats = null;
+  }
+}
+
 function startRoom(room) {
   const shuffled = room.players.slice().sort(() => Math.random() - 0.5);
   room.seats = {
@@ -36,6 +57,14 @@ function startRoom(room) {
     N: shuffled[3].id,
   };
   room.status = 'playing';
+}
+
+function roomUpdate(data) {
+  const next = Object.assign({}, data);
+  if (Object.prototype.hasOwnProperty.call(next, 'seats')) {
+    next.seats = _.set(next.seats);
+  }
+  return next;
 }
 
 async function getDoc(code) {
@@ -74,6 +103,18 @@ async function listRooms() {
   return ok({ rooms });
 }
 
+async function resolvePlayerName(user) {
+  try {
+    const res = await db.collection('players').doc(user.id).get();
+    if (res.data && res.data.name) {
+      return res.data.name;
+    }
+  } catch (error) {
+    // 资料表未建或没有记录时，用客户端传来的名字
+  }
+  return user.name || ('玩家' + String(user.id).slice(-4));
+}
+
 async function createRoom(user) {
   const occupied = await findByPlayer(user.id);
   if (occupied) {
@@ -82,11 +123,12 @@ async function createRoom(user) {
 
   const id = await uniqueCode();
   const now = Date.now();
+  const name = await resolvePlayerName(user);
   const room = {
     status: 'waiting',
     hostId: user.id,
-    hostName: user.name,
-    players: [{ id: user.id, name: user.name, avatar: user.avatar || '' }],
+    hostName: name,
+    players: [{ id: user.id, name, avatar: user.avatar || '' }],
     seats: null,
     createdAt: now,
     updatedAt: now,
@@ -116,19 +158,20 @@ async function joinRoom(code, user) {
     return fail('房间已满');
   }
 
-  room.players.push({ id: user.id, name: user.name, avatar: user.avatar || '' });
+  const name = await resolvePlayerName(user);
+  room.players.push({ id: user.id, name, avatar: user.avatar || '' });
   if (room.players.length === 4) {
     startRoom(room);
   }
   room.updatedAt = Date.now();
 
   await db.collection('rooms').doc(room._id).update({
-    data: {
+    data: roomUpdate({
       players: room.players,
       seats: room.seats,
       status: room.status,
       updatedAt: room.updatedAt,
-    },
+    }),
   });
   return ok({ room: normalize(room) });
 }
@@ -144,14 +187,7 @@ async function leaveRoom(code, userId) {
     return ok({ dissolved: true, room: null });
   }
 
-  room.players = room.players.filter((player) => player.id !== userId);
-  if (room.seats) {
-    Object.keys(room.seats).forEach((wind) => {
-      if (room.seats[wind] === userId) {
-        room.seats[wind] = null;
-      }
-    });
-  }
+  removePlayerAndBots(room, userId);
 
   if (room.players.length === 0) {
     await db.collection('rooms').doc(room._id).remove();
@@ -160,42 +196,57 @@ async function leaveRoom(code, userId) {
 
   room.updatedAt = Date.now();
   await db.collection('rooms').doc(room._id).update({
-    data: {
-      players: room.players,
-      seats: room.seats,
-      updatedAt: room.updatedAt,
-    },
-  });
-  return ok({ dissolved: false, room: normalize(room) });
-}
-
-async function fillBots(code) {
-  const room = await getDoc(code);
-  if (!room) {
-    return fail('房间不存在');
-  }
-
-  const names = ['测试南家', '测试西家', '测试北家'];
-  let index = 0;
-  while (room.players.length < 4 && index < names.length) {
-    room.players.push({
-      id: 'bot-' + room._id + '-' + index,
-      name: names[index],
-      avatar: '',
-    });
-    index += 1;
-  }
-  if (room.players.length === 4 && room.status === 'waiting') {
-    startRoom(room);
-  }
-  room.updatedAt = Date.now();
-  await db.collection('rooms').doc(room._id).update({
-    data: {
+    data: roomUpdate({
       players: room.players,
       seats: room.seats,
       status: room.status,
       updatedAt: room.updatedAt,
-    },
+    }),
+  });
+  return ok({ dissolved: false, room: normalize(room) });
+}
+
+async function fillBots(code, userId) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  if (room.status !== 'waiting') {
+    return fail('对局已开始');
+  }
+  if (!userId || !room.players.some((player) => player.id === userId)) {
+    return fail('你不在这个房间');
+  }
+
+  const names = ['测试南家', '测试西家', '测试北家'];
+  const used = {};
+  room.players.forEach((player) => {
+    used[player.id] = true;
+  });
+  let index = 0;
+  while (room.players.length < 4 && index < names.length) {
+    const botId = 'bot-' + room._id + '-' + index;
+    if (!used[botId]) {
+      room.players.push({
+        id: botId,
+        name: names[index],
+        avatar: '',
+      });
+      used[botId] = true;
+    }
+    index += 1;
+  }
+  if (room.players.length === 4) {
+    startRoom(room);
+  }
+  room.updatedAt = Date.now();
+  await db.collection('rooms').doc(room._id).update({
+    data: roomUpdate({
+      players: room.players,
+      seats: room.seats,
+      status: room.status,
+      updatedAt: room.updatedAt,
+    }),
   });
   return ok({ room: normalize(room) });
 }
@@ -232,7 +283,7 @@ exports.main = async (event) => {
       return await leaveRoom(code, user.id);
     }
     if (action === 'fillBots') {
-      return await fillBots(code);
+      return await fillBots(code, user.id);
     }
     return fail('未知操作');
   } catch (error) {

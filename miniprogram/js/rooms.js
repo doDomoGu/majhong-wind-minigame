@@ -43,10 +43,16 @@ export function leaveRoom(id, userId) {
   return api().leaveRoom(id, userId);
 }
 
-export function addTestPlayers(id) {
-  return api().addTestPlayers(id);
+export function addTestPlayers(id, userId) {
+  return api().addTestPlayers(id, userId);
 }
 
 export function watchRoom(id, onChange) {
   return api().watchRoom(id, onChange);
+}
+
+export function renameLocalPlayer(userId, name) {
+  if (!isCloudReady()) {
+    localRooms.renamePlayer(userId, name);
+  }
 }

@@ -1,7 +1,7 @@
 import { theme, ROOM_STATUS } from './theme.js';
-import { bindPointer, createGameCanvas, eventPoint, resizeCanvas } from './platform.js';
+import { askText, bindPointer, createGameCanvas, eventPoint, resizeCanvas } from './platform.js';
 import { initCloud } from './cloud.js';
-import { loginUser } from './session.js';
+import { loginUser, updatePlayerName } from './session.js';
 import {
   addTestPlayers,
   createRoom,
@@ -9,6 +9,7 @@ import {
   getRoom,
   joinRoom,
   leaveRoom,
+  renameLocalPlayer,
   seedDemoRooms,
   watchRoom,
 } from './rooms.js';
@@ -19,6 +20,7 @@ import { createWaitingScreen } from './screens/waiting.js';
 import { createTableScreen } from './screens/table.js';
 
 let started = false;
+let fillingBots = false;
 
 export function startApp() {
   if (started) {
@@ -31,6 +33,7 @@ export function startApp() {
 
   const app = {
     user: { id: '', name: '登录中', avatar: '' },
+    loginError: '',
     room: null,
     myRoom: null,
     viewMode: 'player',
@@ -84,7 +87,41 @@ export function startApp() {
         next.enter();
       }
     },
+    requireLogin() {
+      if (app.user && app.user.id) {
+        return true;
+      }
+      app.toast(app.loginError || '正在登录，请稍候');
+      return false;
+    },
+    async editNickname() {
+      if (!app.requireLogin()) {
+        return;
+      }
+      const next = await askText({
+        title: '修改昵称',
+        value: app.user.name,
+        placeholder: '最多 12 个字',
+      });
+      if (next == null) {
+        return;
+      }
+      try {
+        const user = await updatePlayerName(next);
+        app.user.name = user.name;
+        renameLocalPlayer(app.user.id, user.name);
+        if (app.screens.lobby.refreshList) {
+          await app.screens.lobby.refreshList(false);
+        }
+        app.toast('昵称已改为 ' + user.name);
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
     async createRoom() {
+      if (!app.requireLogin()) {
+        return;
+      }
       try {
         app.room = await createRoom(app.user);
         app.myRoom = app.room;
@@ -97,6 +134,9 @@ export function startApp() {
       }
     },
     async joinRoom(id) {
+      if (!app.requireLogin()) {
+        return;
+      }
       try {
         app.room = await joinRoom(id, app.user);
         app.myRoom = app.room;
@@ -226,17 +266,29 @@ export function startApp() {
       }
     },
     async fillBots() {
-      if (!app.room) {
+      if (!app.room || fillingBots) {
         return;
       }
+      if (app.room.status !== ROOM_STATUS.waiting) {
+        app.toast('对局已开始');
+        return;
+      }
+      fillingBots = true;
       try {
-        app.room = await addTestPlayers(app.room.id);
+        app.room = await addTestPlayers(app.room.id, app.user.id);
+        if (app.viewMode === 'player') {
+          app.myRoom = app.room;
+        }
         if (app.room.status === ROOM_STATUS.playing) {
           app.goto('table');
-          app.toast('满员，已随机入座');
+          app.toast('已补齐，随机入座');
+          return;
         }
+        app.toast('已补齐测试玩家');
       } catch (error) {
         app.toast(error.message);
+      } finally {
+        fillingBots = false;
       }
     },
   };
@@ -261,12 +313,16 @@ export function startApp() {
     const cloudOn = await initCloud();
     try {
       app.user = await loginUser();
+      app.loginError = '';
     } catch (error) {
+      app.loginError = error.message;
       app.toast(error.message);
     }
 
     if (cloudOn) {
-      app.toast('已连接云开发 · ' + app.user.name);
+      if (app.user.id) {
+        app.toast('已连接云开发 · ' + app.user.name);
+      }
     } else {
       seedDemoRooms();
       app.toast('本地预览（未连接云）');

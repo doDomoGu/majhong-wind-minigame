@@ -62,17 +62,33 @@ export function createLobbyScreen(app) {
         size: 24,
         weight: '700',
       });
-      drawText(ctx, app.myRoom ? ('你已在房间 ' + app.myRoom.id) : '选择或创建一个房间', col.x + pad, col.y + 80, {
+      let subtitle = '选择或创建一个房间';
+      if (!app.user.id) {
+        subtitle = app.loginError || '正在登录微信…';
+      } else if (app.myRoom) {
+        subtitle = '你已在房间 ' + app.myRoom.id;
+      }
+      drawText(ctx, subtitle, col.x + pad, col.y + 80, {
         size: 14,
-        color: theme.muted,
+        color: app.loginError && !app.user.id ? theme.danger : theme.muted,
       });
 
-      drawAvatar(ctx, col.x + col.w - pad - 40, col.y + 36, 40, app.user.name);
-      drawText(ctx, app.user.name, col.x + col.w - pad - 52, col.y + 56, {
-        size: 13,
-        align: 'right',
+      const avatarX = col.x + col.w - pad - 40;
+      const avatarY = col.y + 28;
+      state.hits.profile = { x: avatarX - 8, y: avatarY, w: 48, h: 74 };
+      drawAvatar(ctx, avatarX, avatarY, 40, app.user.name);
+      drawText(ctx, app.user.name || '登录中', avatarX + 20, avatarY + 52, {
+        size: 12,
+        align: 'center',
         color: theme.muted,
       });
+      if (app.user.id) {
+        drawText(ctx, '点击改名', avatarX + 20, avatarY + 68, {
+          size: 10,
+          align: 'center',
+          color: theme.gold,
+        });
+      }
 
       const bottomH = 156;
       state.list = {
@@ -150,14 +166,14 @@ export function createLobbyScreen(app) {
         state.hits.create = left;
         state.hits.join = join;
         state.hits.watch = watch;
-        drawButton(ctx, left, '创建房间');
+        drawButton(ctx, left, app.user.id ? '创建房间' : '登录后可创建房间');
         drawGhostButton(ctx, join, '输入房号加入');
         drawGhostButton(ctx, watch, '公共视角');
       }
 
       const refreshBtn = {
-        x: col.x + col.w - pad - 72,
-        y: col.y + 68,
+        x: avatarX - 84,
+        y: col.y + 36,
         w: 72,
         h: 32,
       };
@@ -165,6 +181,10 @@ export function createLobbyScreen(app) {
       drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
     },
     async onTap(point) {
+      if (hit(point, state.hits.profile || {})) {
+        await app.editNickname();
+        return;
+      }
       if (hit(point, state.hits.refresh || {})) {
         await refreshList(true);
         return;

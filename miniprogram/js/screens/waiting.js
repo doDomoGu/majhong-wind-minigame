@@ -1,4 +1,5 @@
-import { theme } from '../theme.js';
+import { theme, ROOM_STATUS } from '../theme.js';
+import { getSafeInsets } from '../platform.js';
 import {
   drawAvatar,
   drawButton,
@@ -86,21 +87,30 @@ export function createWaitingScreen(app) {
         color: theme.muted,
       });
 
-      const fill = {
-        x: col.x + pad,
-        y: col.y + col.h - 148,
-        w: col.w - pad * 2,
-        h: 46,
-      };
+      const insets = getSafeInsets();
+      const bottomLimit = Math.min(col.y + col.h, height - insets.bottom) - 20;
       const leave = {
         x: col.x + pad,
-        y: col.y + col.h - 88,
+        y: bottomLimit - 46,
         w: col.w - pad * 2,
         h: 46,
       };
-      state.hits.fill = fill;
+      const need = Math.max(0, 4 - room.players.length);
+      const canFill = room.status === ROOM_STATUS.waiting && need > 0;
       state.hits.leave = leave;
-      drawGhostButton(ctx, fill, '调试：补齐测试玩家', { color: theme.gold, border: theme.gold });
+      if (canFill) {
+        const fill = {
+          x: col.x + pad,
+          y: leave.y - 60,
+          w: col.w - pad * 2,
+          h: 46,
+        };
+        state.hits.fill = fill;
+        drawGhostButton(ctx, fill, '调试：补齐测试玩家（差 ' + need + ' 人）', {
+          color: theme.gold,
+          border: theme.gold,
+        });
+      }
       drawButton(ctx, leave, '离开房间', {
         color: theme.danger,
         textColor: theme.text,

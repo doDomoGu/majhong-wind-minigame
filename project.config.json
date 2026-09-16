@@ -24,22 +24,23 @@
     "minifyWXML": true,
     "useCompilerPlugins": false
   },
+  "miniprogramRoot": "miniprogram/",
   "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "game",
   "libVersion": "latest",
   "appid": "wx19b1f7d7af205c27",
   "projectname": "riichi-mahjong-wind-directions",
   "condition": {
-    "search": {
-      "current": -1,
-      "list": []
-    },
-    "conversation": {
-      "current": -1,
-      "list": []
-    },
     "game": {
-      "currentL": -1,
+      "current": -1,
+      "list": []
+    },
+    "plugin": {
+      "current": -1,
+      "list": []
+    },
+    "gamePlugin": {
+      "current": -1,
       "list": []
     },
     "miniprogram": {

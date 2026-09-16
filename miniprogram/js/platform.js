@@ -1,24 +1,133 @@
+const FALLBACK_WINDOW = {
+  screenWidth: 390,
+  screenHeight: 844,
+  pixelRatio: 2,
+};
+
 export function getWindowInfo() {
-  if (typeof wx !== 'undefined') {
-    if (wx.getWindowInfo) {
-      return wx.getWindowInfo();
-    }
-    if (wx.getSystemInfoSync) {
-      return wx.getSystemInfoSync();
+  if (typeof wx !== 'undefined' && typeof wx.getWindowInfo === 'function') {
+    try {
+      const info = wx.getWindowInfo();
+      if (info && info.screenWidth) {
+        return info;
+      }
+    } catch (error) {
+      // JSBridge 尚未就绪时不要再调 getSystemInfoSync
     }
   }
 
+  if (typeof window !== 'undefined' && window.innerWidth) {
+    return {
+      screenWidth: window.innerWidth,
+      screenHeight: window.innerHeight,
+      pixelRatio: window.devicePixelRatio || 1,
+    };
+  }
+
+  return FALLBACK_WINDOW;
+}
+
+export function whenWxReady(callback) {
+  let tries = 0;
+
+  const attempt = () => {
+    if (typeof wx === 'undefined') {
+      callback();
+      return;
+    }
+
+    try {
+      if (typeof wx.getWindowInfo === 'function') {
+        const info = wx.getWindowInfo();
+        if (info && info.screenWidth) {
+          callback();
+          return;
+        }
+      } else {
+        callback();
+        return;
+      }
+    } catch (error) {
+      // jsbridge not ready
+    }
+
+    tries += 1;
+    if (tries >= 60) {
+      callback();
+      return;
+    }
+    setTimeout(attempt, 32);
+  };
+
+  attempt();
+}
+
+export function askText(options) {
+  const title = (options && options.title) || '请输入';
+  const value = (options && options.value) || '';
+  const placeholder = (options && options.placeholder) || '';
+
+  return new Promise((resolve) => {
+    if (typeof wx !== 'undefined' && wx.showModal) {
+      wx.showModal({
+        title,
+        content: value,
+        editable: true,
+        placeholderText: placeholder,
+        confirmText: '确定',
+        cancelText: '取消',
+        success(res) {
+          if (!res.confirm) {
+            resolve(null);
+            return;
+          }
+          resolve(String(res.content == null ? '' : res.content).trim());
+        },
+        fail() {
+          resolve(null);
+        },
+      });
+      return;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.prompt === 'function') {
+      const next = window.prompt(title, value);
+      resolve(next == null ? null : String(next).trim());
+      return;
+    }
+
+    resolve(null);
+  });
+}
+
+export function getSafeInsets() {
+  const info = getWindowInfo();
+  const width = info.screenWidth || 0;
+  const height = info.screenHeight || 0;
+  const safe = info.safeArea;
+  if (!safe) {
+    return { top: 0, right: 0, bottom: 0, left: 0 };
+  }
   return {
-    screenWidth: window.innerWidth,
-    screenHeight: window.innerHeight,
-    pixelRatio: window.devicePixelRatio || 1,
+    top: Math.max(0, safe.top || 0),
+    right: Math.max(0, width - (safe.right || width)),
+    bottom: Math.max(0, height - (safe.bottom || height)),
+    left: Math.max(0, safe.left || 0),
   };
 }
 
 export function createGameCanvas() {
-  const canvas = typeof wx !== 'undefined' && wx.createCanvas
-    ? wx.createCanvas()
-    : document.querySelector('canvas');
+  let canvas = null;
+  if (typeof GameGlobal !== 'undefined' && GameGlobal.canvas) {
+    canvas = GameGlobal.canvas;
+  } else if (typeof wx !== 'undefined' && typeof wx.createCanvas === 'function') {
+    canvas = wx.createCanvas();
+    if (typeof GameGlobal !== 'undefined') {
+      GameGlobal.canvas = canvas;
+    }
+  } else if (typeof document !== 'undefined') {
+    canvas = document.querySelector('canvas');
+  }
 
   const info = getWindowInfo();
   const dpr = info.pixelRatio || 1;
