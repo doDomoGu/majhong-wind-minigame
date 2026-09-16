@@ -214,6 +214,10 @@ exports.main = async (event) => {
     if (action === 'list') {
       return await listRooms();
     }
+    if (action === 'mine') {
+      const room = await findByPlayer(user.id);
+      return ok({ room: normalize(room) });
+    }
     if (action === 'get') {
       const room = await getDoc(code);
       return room ? ok({ room: normalize(room) }) : fail('房间不存在');

@@ -35,6 +35,15 @@ export function createWaitingScreen(app) {
         color: theme.muted,
       });
 
+      const refreshBtn = {
+        x: col.x + col.w - pad - 72,
+        y: col.y + 36,
+        w: 72,
+        h: 36,
+      };
+      state.hits.refresh = refreshBtn;
+      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
+
       const slots = [0, 1, 2, 3];
       const gap = 12;
       const slotW = (col.w - pad * 2 - gap) / 2;
@@ -97,13 +106,17 @@ export function createWaitingScreen(app) {
         textColor: theme.text,
       });
     },
-    onTap(point) {
+    async onTap(point) {
+      if (hit(point, state.hits.refresh || {})) {
+        await app.refreshCurrent(true);
+        return;
+      }
       if (hit(point, state.hits.fill || {})) {
-        app.fillBots();
+        await app.fillBots();
         return;
       }
       if (hit(point, state.hits.leave || {})) {
-        app.leaveRoom();
+        await app.leaveRoom();
       }
     },
   };

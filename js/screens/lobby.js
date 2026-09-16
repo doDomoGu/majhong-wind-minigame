@@ -21,9 +21,18 @@ export function createLobbyScreen(app) {
     list: { x: 0, y: 0, w: 0, h: 0 },
   };
 
+  function roomHasUser(room, userId) {
+    return !!(room && userId && room.players && room.players.some((player) => player.id === userId));
+  }
+
   async function refreshList(showToast) {
     try {
       state.rooms = await listRooms();
+      const listed = state.rooms.find((room) => roomHasUser(room, app.user.id));
+      app.myRoom = listed || null;
+      if (!app.myRoom && app.refreshMyRoom) {
+        await app.refreshMyRoom();
+      }
       if (showToast) {
         app.toast('已刷新房间列表');
       }
@@ -53,7 +62,7 @@ export function createLobbyScreen(app) {
         size: 24,
         weight: '700',
       });
-      drawText(ctx, '选择或创建一个房间', col.x + pad, col.y + 80, {
+      drawText(ctx, app.myRoom ? ('你已在房间 ' + app.myRoom.id) : '选择或创建一个房间', col.x + pad, col.y + 80, {
         size: 14,
         color: theme.muted,
       });
@@ -78,7 +87,7 @@ export function createLobbyScreen(app) {
       ctx.rect(state.list.x, state.list.y, state.list.w, state.list.h);
       ctx.clip();
 
-      if (state.rooms.length === 0) {
+      if (state.rooms.length === 0 && !app.myRoom) {
         drawText(ctx, '还没有房间，创建一个吧', state.list.x + state.list.w / 2, state.list.y + 80, {
           size: 15,
           align: 'center',
@@ -132,30 +141,36 @@ export function createLobbyScreen(app) {
       const join = { x: col.x + pad, y: btnY + 60, w: btnW, h: 44 };
       const watch = { x: col.x + pad + btnW + 12, y: btnY + 60, w: btnW, h: 44 };
 
-      state.hits.create = left;
-      state.hits.join = join;
-      state.hits.watch = watch;
-
-      drawButton(ctx, left, '创建房间');
-      drawGhostButton(ctx, join, '输入房号加入');
-      drawGhostButton(ctx, watch, '公共视角');
+      if (app.myRoom) {
+        state.hits.back = left;
+        state.hits.watch = { x: col.x + pad, y: btnY + 60, w: col.w - pad * 2, h: 44 };
+        drawButton(ctx, left, '回到房间 ' + app.myRoom.id);
+        drawGhostButton(ctx, state.hits.watch, '公共视角');
+      } else {
+        state.hits.create = left;
+        state.hits.join = join;
+        state.hits.watch = watch;
+        drawButton(ctx, left, '创建房间');
+        drawGhostButton(ctx, join, '输入房号加入');
+        drawGhostButton(ctx, watch, '公共视角');
+      }
 
       const refreshBtn = {
-        x: col.x + col.w - pad - 56,
-        y: col.y + 70,
-        w: 56,
-        h: 28,
+        x: col.x + col.w - pad - 72,
+        y: col.y + 68,
+        w: 72,
+        h: 32,
       };
       state.hits.refresh = refreshBtn;
-      drawText(ctx, '刷新', refreshBtn.x + refreshBtn.w, refreshBtn.y + 14, {
-        size: 13,
-        align: 'right',
-        color: theme.gold,
-      });
+      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
     },
     async onTap(point) {
       if (hit(point, state.hits.refresh || {})) {
         await refreshList(true);
+        return;
+      }
+      if (hit(point, state.hits.back || {})) {
+        await app.returnToRoom();
         return;
       }
       if (hit(point, state.hits.create || {})) {
@@ -179,6 +194,14 @@ export function createLobbyScreen(app) {
 
       const roomHit = Object.values(state.hits).find((item) => item.room && hit(point, item));
       if (roomHit) {
+        if (app.myRoom && roomHit.room.id === app.myRoom.id) {
+          await app.returnToRoom();
+          return;
+        }
+        if (app.myRoom) {
+          app.toast('你已在房间 ' + app.myRoom.id + '，请先回到房间');
+          return;
+        }
         await app.openRoomFromList(roomHit.room);
       }
     },

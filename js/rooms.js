@@ -27,6 +27,10 @@ export function getRoom(id) {
   return api().getRoom(id);
 }
 
+export function findMyRoom(userId) {
+  return api().findMyRoom(userId);
+}
+
 export function createRoom(user) {
   return api().createRoom(user);
 }

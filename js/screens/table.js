@@ -3,6 +3,7 @@ import { WINDS } from '../rooms.js';
 import {
   drawAvatar,
   drawButton,
+  drawGhostButton,
   drawText,
   fillRoundRect,
   hit,
@@ -35,6 +36,15 @@ export function createTableScreen(app) {
         size: 14,
         color: theme.muted,
       });
+
+      const refreshBtn = {
+        x: col.x + col.w - pad - 72,
+        y: col.y + 36,
+        w: 72,
+        h: 36,
+      };
+      state.hits.refresh = refreshBtn;
+      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
 
       const centerX = col.x + col.w / 2;
       const centerY = col.y + col.h / 2 - 10;
@@ -85,7 +95,11 @@ export function createTableScreen(app) {
         textColor: theme.text,
       });
     },
-    onTap(point) {
+    async onTap(point) {
+      if (hit(point, state.hits.refresh || {})) {
+        await app.refreshCurrent(true);
+        return;
+      }
       if (hit(point, state.hits.leave || {})) {
         if (app.viewMode === 'public') {
           app.goto('lobby');

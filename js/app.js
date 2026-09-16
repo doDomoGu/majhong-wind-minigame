@@ -5,6 +5,7 @@ import { loginUser } from './session.js';
 import {
   addTestPlayers,
   createRoom,
+  findMyRoom,
   getRoom,
   joinRoom,
   leaveRoom,
@@ -31,6 +32,7 @@ export function startApp() {
   const app = {
     user: { id: '', name: '登录中', avatar: '' },
     room: null,
+    myRoom: null,
     viewMode: 'player',
     toastMessage: '',
     toastUntil: 0,
@@ -51,8 +53,9 @@ export function startApp() {
       }
       app.roomWatcher = watchRoom(id, (room) => {
         if (!room) {
+          app.room = null;
+          app.myRoom = null;
           if (app.screen !== 'lobby') {
-            app.room = null;
             app.goto('lobby');
             app.toast('房间已解散');
           }
@@ -84,6 +87,7 @@ export function startApp() {
     async createRoom() {
       try {
         app.room = await createRoom(app.user);
+        app.myRoom = app.room;
         app.viewMode = 'player';
         app.goto('waiting');
         app.subscribeRoom(app.room.id);
@@ -95,6 +99,7 @@ export function startApp() {
     async joinRoom(id) {
       try {
         app.room = await joinRoom(id, app.user);
+        app.myRoom = app.room;
         app.viewMode = 'player';
         app.subscribeRoom(app.room.id);
         if (app.room.status === ROOM_STATUS.playing) {
@@ -130,6 +135,45 @@ export function startApp() {
         app.toast(error.message);
       }
     },
+    async returnToRoom() {
+      if (!app.myRoom) {
+        return;
+      }
+      try {
+        const room = await getRoom(app.myRoom.id);
+        if (!room) {
+          app.myRoom = null;
+          app.toast('房间已解散');
+          if (app.screens.lobby.refreshList) {
+            await app.screens.lobby.refreshList(false);
+          }
+          return;
+        }
+        app.room = room;
+        app.myRoom = room;
+        app.viewMode = 'player';
+        app.subscribeRoom(room.id);
+        if (room.status === ROOM_STATUS.waiting) {
+          app.goto('waiting');
+        } else {
+          app.goto('table');
+        }
+        app.toast('已回到房间 ' + room.id);
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async refreshMyRoom() {
+      if (!app.user || !app.user.id) {
+        app.myRoom = null;
+        return;
+      }
+      try {
+        app.myRoom = await findMyRoom(app.user.id);
+      } catch (error) {
+        // 未部署 mine 时，从列表里推断
+      }
+    },
     async leaveRoom() {
       if (!app.room) {
         app.goto('lobby');
@@ -138,9 +182,45 @@ export function startApp() {
       try {
         const result = await leaveRoom(app.room.id, app.user.id);
         app.room = null;
+        app.myRoom = null;
         app.viewMode = 'player';
         app.goto('lobby');
         app.toast(result && result.dissolved ? '房间已解散' : '已离开房间');
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async refreshCurrent(showToast) {
+      if (app.screen === 'lobby') {
+        if (app.screens.lobby.refreshList) {
+          await app.screens.lobby.refreshList(!!showToast);
+        }
+        return;
+      }
+      if (!app.room) {
+        return;
+      }
+      try {
+        const room = await getRoom(app.room.id);
+        if (!room) {
+          app.room = null;
+          app.myRoom = null;
+          app.goto('lobby');
+          app.toast('房间已解散');
+          return;
+        }
+        app.room = room;
+        if (app.viewMode === 'player') {
+          app.myRoom = room;
+        }
+        if (room.status === ROOM_STATUS.playing && app.screen === 'waiting' && app.viewMode === 'player') {
+          app.goto('table');
+          app.toast('满员，已随机入座');
+          return;
+        }
+        if (showToast) {
+          app.toast('已刷新');
+        }
       } catch (error) {
         app.toast(error.message);
       }
@@ -193,7 +273,7 @@ export function startApp() {
     }
 
     if (app.screens.lobby.refreshList) {
-      await app.screens.lobby.refreshList();
+      await app.screens.lobby.refreshList(false);
     }
   }
 

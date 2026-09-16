@@ -12,6 +12,11 @@ export async function listRooms() {
   return result.rooms || [];
 }
 
+export async function findMyRoom() {
+  const result = unwrap(await callCloud('room', { action: 'mine' }));
+  return result.room || null;
+}
+
 export async function getRoom(id) {
   const result = unwrap(await callCloud('room', { action: 'get', code: String(id) }));
   return result.room;

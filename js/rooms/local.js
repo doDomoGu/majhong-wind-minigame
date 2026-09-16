@@ -98,6 +98,10 @@ export async function getRoom(id) {
   return room ? cloneRoom(room) : null;
 }
 
+export async function findMyRoom(userId) {
+  return findRoomByUser(userId);
+}
+
 function findRoomByUser(userId) {
   const room = [...rooms.values()].find((item) => item.players.some((player) => player.id === userId));
   return room ? cloneRoom(room) : null;
