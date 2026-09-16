@@ -97,6 +97,7 @@ export function normalizeRoom(doc) {
     hostName: doc.hostName,
     players: doc.players || [],
     seats: doc.seats || null,
+    game: doc.game || null,
     createdAt: doc.createdAt,
   };
 }

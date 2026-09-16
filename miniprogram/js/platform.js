@@ -62,6 +62,31 @@ export function whenWxReady(callback) {
   attempt();
 }
 
+export function askConfirm(title, content) {
+  return new Promise((resolve) => {
+    if (typeof wx !== 'undefined' && wx.showModal) {
+      wx.showModal({
+        title: title || '确认',
+        content: content || '',
+        confirmText: '确定',
+        cancelText: '取消',
+        success(res) {
+          resolve(!!res.confirm);
+        },
+        fail() {
+          resolve(false);
+        },
+      });
+      return;
+    }
+    if (typeof window !== 'undefined' && typeof window.confirm === 'function') {
+      resolve(window.confirm((title || '') + (content ? '\n' + content : '')));
+      return;
+    }
+    resolve(true);
+  });
+}
+
 export function askText(options) {
   const title = (options && options.title) || '请输入';
   const value = (options && options.value) || '';

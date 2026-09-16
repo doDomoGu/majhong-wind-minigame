@@ -56,3 +56,23 @@ export function renameLocalPlayer(userId, name) {
     localRooms.renamePlayer(userId, name);
   }
 }
+
+export function playRiichi(id, userId, targetId) {
+  return api().playRiichi(id, userId, targetId);
+}
+
+export function playCancelRiichi(id, userId, targetId) {
+  return api().playCancelRiichi(id, userId, targetId);
+}
+
+export function playStartSettle(id, userId, kind, dealerFlag) {
+  return api().playStartSettle(id, userId, kind, dealerFlag);
+}
+
+export function playSubmitSettle(id, userId, value) {
+  return api().playSubmitSettle(id, userId, value);
+}
+
+export function playUndo(id, userId) {
+  return api().playUndo(id, userId);
+}

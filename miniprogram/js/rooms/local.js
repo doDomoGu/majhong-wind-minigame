@@ -1,4 +1,13 @@
 import { ROOM_STATUS } from '../theme.js';
+import {
+  applyRiichi,
+  cancelRiichi,
+  computeResults,
+  createInitialGame,
+  startSettle,
+  submitSettle,
+  undoLastHand,
+} from '../game/rules.js';
 
 const rooms = new Map();
 let seeded = false;
@@ -16,6 +25,7 @@ function cloneRoom(room) {
     ...room,
     players: room.players.map((player) => ({ ...player })),
     seats: room.seats ? { ...room.seats } : null,
+    game: room.game ? JSON.parse(JSON.stringify(room.game)) : null,
   };
 }
 
@@ -36,6 +46,7 @@ function removePlayerAndBots(room, userId) {
   if (room.status === ROOM_STATUS.playing && room.players.length < 4) {
     room.status = ROOM_STATUS.waiting;
     room.seats = null;
+    room.game = null;
   }
 }
 
@@ -48,6 +59,7 @@ function startRoom(room) {
     N: shuffled[3].id,
   };
   room.status = ROOM_STATUS.playing;
+  room.game = createInitialGame(room.players);
 }
 
 export function seedDemoRooms() {
@@ -81,6 +93,12 @@ export function seedDemoRooms() {
       { id: 'demo-6', name: '南家阿梅' },
     ],
     seats: { E: 'demo-3', S: 'demo-4', W: 'demo-5', N: 'demo-6' },
+    game: createInitialGame([
+      { id: 'demo-3', name: '雀桌老王' },
+      { id: 'demo-4', name: '西家小满' },
+      { id: 'demo-5', name: '北风阿七' },
+      { id: 'demo-6', name: '南家阿梅' },
+    ]),
     createdAt: Date.now() - 800000,
   });
 
@@ -96,8 +114,33 @@ export function seedDemoRooms() {
       { id: 'demo-10', name: '四位' },
     ],
     seats: { E: 'demo-7', S: 'demo-8', W: 'demo-9', N: 'demo-10' },
+    game: demoFinishedGame(),
     createdAt: Date.now() - 3600000,
   });
+}
+
+function demoFinishedGame() {
+  const players = [
+    { id: 'demo-7', name: '终局示例' },
+    { id: 'demo-8', name: '二位' },
+    { id: 'demo-9', name: '三位' },
+    { id: 'demo-10', name: '四位' },
+  ];
+  const seats = { E: 'demo-7', S: 'demo-8', W: 'demo-9', N: 'demo-10' };
+  const game = createInitialGame(players);
+  game.scores = {
+    'demo-7': 38000,
+    'demo-8': 31000,
+    'demo-9': 22000,
+    'demo-10': 9000,
+  };
+  game.roundWind = 'S';
+  game.kyoku = 4;
+  game.dealerWind = 'N';
+  game.phase = 'finished';
+  game.kyotaku = 0;
+  game.results = computeResults(game, seats);
+  return game;
 }
 
 export async function listRooms() {
@@ -240,6 +283,73 @@ export function renamePlayer(userId, name) {
       room.hostName = name;
     }
   });
+}
+
+function requireSeated(room, userId) {
+  if (!room.game) {
+    throw new Error('对局尚未开始');
+  }
+  if (!Object.values(room.seats || {}).includes(userId)) {
+    throw new Error('你不在这桌');
+  }
+}
+
+function afterPlay(room) {
+  if (room.game && room.game.phase === 'finished') {
+    room.status = ROOM_STATUS.finished;
+  }
+  return cloneRoom(room);
+}
+
+export async function playRiichi(id, userId, targetId) {
+  const room = rooms.get(String(id));
+  if (!room) {
+    throw new Error('房间不存在');
+  }
+  requireSeated(room, userId);
+  applyRiichi(room.game, targetId || userId);
+  return afterPlay(room);
+}
+
+export async function playCancelRiichi(id, userId, targetId) {
+  const room = rooms.get(String(id));
+  if (!room) {
+    throw new Error('房间不存在');
+  }
+  requireSeated(room, userId);
+  cancelRiichi(room.game, targetId || userId);
+  return afterPlay(room);
+}
+
+export async function playStartSettle(id, userId, kind, dealerFlag) {
+  const room = rooms.get(String(id));
+  if (!room) {
+    throw new Error('房间不存在');
+  }
+  requireSeated(room, userId);
+  startSettle(room.game, room.seats, kind, dealerFlag);
+  return afterPlay(room);
+}
+
+export async function playSubmitSettle(id, userId, value) {
+  const room = rooms.get(String(id));
+  if (!room) {
+    throw new Error('房间不存在');
+  }
+  requireSeated(room, userId);
+  submitSettle(room.game, room.seats, userId, value);
+  return afterPlay(room);
+}
+
+export async function playUndo(id, userId) {
+  const room = rooms.get(String(id));
+  if (!room) {
+    throw new Error('房间不存在');
+  }
+  requireSeated(room, userId);
+  undoLastHand(room.game);
+  room.status = ROOM_STATUS.playing;
+  return afterPlay(room);
 }
 
 export function watchRoom() {

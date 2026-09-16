@@ -65,6 +65,51 @@ export async function addTestPlayers(id) {
   }
 }
 
+export async function playRiichi(id, userId, targetId) {
+  const result = unwrap(await callCloud('room', {
+    action: 'riichi',
+    code: String(id),
+    targetId: targetId || userId,
+  }));
+  return result.room;
+}
+
+export async function playCancelRiichi(id, userId, targetId) {
+  const result = unwrap(await callCloud('room', {
+    action: 'cancelRiichi',
+    code: String(id),
+    targetId: targetId || userId,
+  }));
+  return result.room;
+}
+
+export async function playStartSettle(id, userId, kind, dealerFlag) {
+  const result = unwrap(await callCloud('room', {
+    action: 'startSettle',
+    code: String(id),
+    kind,
+    dealerFlag: !!dealerFlag,
+  }));
+  return result.room;
+}
+
+export async function playSubmitSettle(id, userId, value) {
+  const result = unwrap(await callCloud('room', {
+    action: 'submitSettle',
+    code: String(id),
+    value,
+  }));
+  return result.room;
+}
+
+export async function playUndo(id, userId) {
+  const result = unwrap(await callCloud('room', {
+    action: 'undoSettle',
+    code: String(id),
+  }));
+  return result.room;
+}
+
 export function watchRoom(id, onChange) {
   return watchRoomDoc(id, onChange);
 }

@@ -4,6 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
 const db = cloud.database();
 const _ = db.command;
+const gameLogic = require('./gameLogic');
 
 function fail(error) {
   return { ok: false, error };
@@ -24,6 +25,7 @@ function normalize(doc) {
     hostName: doc.hostName,
     players: doc.players || [],
     seats: doc.seats || null,
+    game: doc.game || null,
     createdAt: doc.createdAt,
   };
 }
@@ -45,6 +47,7 @@ function removePlayerAndBots(room, userId) {
   if (room.status === 'playing' && room.players.length < 4) {
     room.status = 'waiting';
     room.seats = null;
+    room.game = null;
   }
 }
 
@@ -57,14 +60,98 @@ function startRoom(room) {
     N: shuffled[3].id,
   };
   room.status = 'playing';
+  room.game = gameLogic.createInitialGame(room.players);
 }
 
 function roomUpdate(data) {
   const next = Object.assign({}, data);
-  if (Object.prototype.hasOwnProperty.call(next, 'seats')) {
-    next.seats = _.set(next.seats);
-  }
+  ['seats', 'game'].forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(next, key)) {
+      next[key] = _.set(next[key]);
+    }
+  });
   return next;
+}
+
+async function savePlayingRoom(room) {
+  if (room.game && room.game.phase === 'finished') {
+    room.status = 'finished';
+  }
+  room.updatedAt = Date.now();
+  await db.collection('rooms').doc(room._id).update({
+    data: roomUpdate({
+      players: room.players,
+      seats: room.seats,
+      status: room.status,
+      game: room.game,
+      updatedAt: room.updatedAt,
+    }),
+  });
+}
+
+function requireSeated(room, userId) {
+  if (!room.game) {
+    throw new Error('对局尚未开始');
+  }
+  if (gameLogic.seatedIds(room.seats).indexOf(userId) < 0) {
+    throw new Error('你不在这桌');
+  }
+}
+
+async function playRiichi(code, userId, targetId) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  requireSeated(room, userId);
+  gameLogic.applyRiichi(room.game, targetId || userId);
+  await savePlayingRoom(room);
+  return ok({ room: normalize(room) });
+}
+
+async function playCancelRiichi(code, userId, targetId) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  requireSeated(room, userId);
+  gameLogic.cancelRiichi(room.game, targetId || userId);
+  await savePlayingRoom(room);
+  return ok({ room: normalize(room) });
+}
+
+async function playStartSettle(code, userId, kind, dealerFlag) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  requireSeated(room, userId);
+  gameLogic.startSettle(room.game, room.seats, kind, dealerFlag);
+  await savePlayingRoom(room);
+  return ok({ room: normalize(room) });
+}
+
+async function playSubmitSettle(code, userId, value) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  requireSeated(room, userId);
+  const status = gameLogic.submitSettle(room.game, room.seats, userId, value);
+  await savePlayingRoom(room);
+  return ok({ room: normalize(room), settleStatus: status });
+}
+
+async function playUndo(code, userId) {
+  const room = await getDoc(code);
+  if (!room) {
+    return fail('房间不存在');
+  }
+  requireSeated(room, userId);
+  gameLogic.undoLastHand(room.game);
+  room.status = 'playing';
+  await savePlayingRoom(room);
+  return ok({ room: normalize(room) });
 }
 
 async function getDoc(code) {
@@ -170,6 +257,7 @@ async function joinRoom(code, user) {
       players: room.players,
       seats: room.seats,
       status: room.status,
+      game: room.game || null,
       updatedAt: room.updatedAt,
     }),
   });
@@ -200,6 +288,7 @@ async function leaveRoom(code, userId) {
       players: room.players,
       seats: room.seats,
       status: room.status,
+      game: room.game || null,
       updatedAt: room.updatedAt,
     }),
   });
@@ -245,6 +334,7 @@ async function fillBots(code, userId) {
       players: room.players,
       seats: room.seats,
       status: room.status,
+      game: room.game || null,
       updatedAt: room.updatedAt,
     }),
   });
@@ -284,6 +374,21 @@ exports.main = async (event) => {
     }
     if (action === 'fillBots') {
       return await fillBots(code, user.id);
+    }
+    if (action === 'riichi') {
+      return await playRiichi(code, user.id, event.targetId);
+    }
+    if (action === 'cancelRiichi') {
+      return await playCancelRiichi(code, user.id, event.targetId);
+    }
+    if (action === 'startSettle') {
+      return await playStartSettle(code, user.id, event.kind, event.dealerFlag);
+    }
+    if (action === 'submitSettle') {
+      return await playSubmitSettle(code, user.id, event.value);
+    }
+    if (action === 'undoSettle') {
+      return await playUndo(code, user.id);
     }
     return fail('未知操作');
   } catch (error) {

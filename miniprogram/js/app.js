@@ -1,5 +1,6 @@
 import { theme, ROOM_STATUS } from './theme.js';
 import { askText, bindPointer, createGameCanvas, eventPoint, resizeCanvas } from './platform.js';
+import { createConfirm, drawConfirm, openConfirm, tapConfirm } from './confirm.js';
 import { initCloud } from './cloud.js';
 import { loginUser, updatePlayerName } from './session.js';
 import {
@@ -9,11 +10,16 @@ import {
   getRoom,
   joinRoom,
   leaveRoom,
+  playCancelRiichi,
+  playRiichi,
+  playStartSettle,
+  playSubmitSettle,
+  playUndo,
   renameLocalPlayer,
   seedDemoRooms,
   watchRoom,
 } from './rooms.js';
-import { createKeypad, drawKeypad, openKeypad, tapKeypad } from './keypad.js';
+import { createKeypad, drawKeypad, openKeypad, openScorePad, tapKeypad } from './keypad.js';
 import { drawToast } from './ui.js';
 import { createLobbyScreen } from './screens/lobby.js';
 import { createWaitingScreen } from './screens/waiting.js';
@@ -40,6 +46,7 @@ export function startApp() {
     toastMessage: '',
     toastUntil: 0,
     keypad: createKeypad(),
+    confirm: createConfirm(),
     screen: null,
     screens: {},
     roomWatcher: null,
@@ -49,6 +56,12 @@ export function startApp() {
     },
     askRoomCode(title) {
       return openKeypad(app.keypad, title);
+    },
+    askYesNo(title, message) {
+      return openConfirm(app.confirm, title, message);
+    },
+    askDelta() {
+      return openScorePad(app.keypad, '本局点数变化（不含立直已扣的 1000）');
     },
     subscribeRoom(id) {
       if (app.roomWatcher && app.roomWatcher.close) {
@@ -65,9 +78,21 @@ export function startApp() {
           return;
         }
         app.room = room;
-        if (room.status === ROOM_STATUS.playing && app.screen === 'waiting' && app.viewMode === 'player') {
+        if (app.viewMode === 'player') {
+          app.myRoom = room;
+        }
+        if (app.viewMode === 'player' && room.status === ROOM_STATUS.waiting && app.screen === 'table') {
+          app.goto('waiting');
+          app.toast('有人离开，回到等待房');
+          return;
+        }
+        if (
+          app.viewMode === 'player'
+          && (room.status === ROOM_STATUS.playing || room.status === ROOM_STATUS.finished)
+          && app.screen === 'waiting'
+        ) {
           app.goto('table');
-          app.toast('满员，已随机入座');
+          app.toast(room.status === ROOM_STATUS.playing ? '满员，已随机入座' : '半庄结束');
         }
       });
     },
@@ -214,10 +239,78 @@ export function startApp() {
         // 未部署 mine 时，从列表里推断
       }
     },
+    async applyRoom(room, message) {
+      app.room = room;
+      if (app.viewMode === 'player') {
+        app.myRoom = room;
+      }
+      if (message) {
+        app.toast(message);
+      }
+    },
+    async riichiSeat(targetId) {
+      try {
+        const room = await playRiichi(app.room.id, app.user.id, targetId);
+        await app.applyRoom(room, '立直 -1000');
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async cancelRiichiSeat(targetId) {
+      try {
+        const room = await playCancelRiichi(app.room.id, app.user.id, targetId);
+        await app.applyRoom(room, '已取消本次立直');
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async startSettle(kind, dealerFlag) {
+      try {
+        const room = await playStartSettle(app.room.id, app.user.id, kind, dealerFlag);
+        await app.applyRoom(room, '已发起本局结算');
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async submitSettle(value) {
+      try {
+        const room = await playSubmitSettle(app.room.id, app.user.id, value);
+        const phase = room.game && room.game.phase;
+        let message = '已提交';
+        if (phase === 'finished') {
+          message = '半庄结束';
+        } else if (phase === 'playing') {
+          message = '对账通过，进入下一局';
+        } else if (room.game && room.game.settle && room.game.settle.error) {
+          message = room.game.settle.error;
+        }
+        await app.applyRoom(room, message);
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
+    async undoSettle() {
+      const ok = await app.askYesNo('撤销上一局', '将回到上一局开始，该局立直和结算都会作废。');
+      if (!ok) {
+        return;
+      }
+      try {
+        const room = await playUndo(app.room.id, app.user.id);
+        await app.applyRoom(room, '已撤销上一局');
+      } catch (error) {
+        app.toast(error.message);
+      }
+    },
     async leaveRoom() {
       if (!app.room) {
         app.goto('lobby');
         return;
+      }
+      if (app.viewMode === 'player' && app.room.status === ROOM_STATUS.playing) {
+        const ok = await app.askYesNo('离开房间', '对局中离开会空出座位，确定离开？');
+        if (!ok) {
+          return;
+        }
       }
       try {
         const result = await leaveRoom(app.room.id, app.user.id);
@@ -336,7 +429,7 @@ export function startApp() {
   bindPointer(canvas, {
     point: (event) => eventPoint(event, canvas, width, height),
     onDrag: (dy) => {
-      if (app.keypad.visible) {
+      if (app.keypad.visible || app.confirm.visible) {
         return;
       }
       const current = app.screens[app.screen];
@@ -347,6 +440,10 @@ export function startApp() {
     onTap: async (point) => {
       if (app.keypad.visible) {
         tapKeypad(app.keypad, point);
+        return;
+      }
+      if (app.confirm.visible) {
+        tapConfirm(app.confirm, point);
         return;
       }
       const current = app.screens[app.screen];
@@ -373,6 +470,7 @@ export function startApp() {
     }
 
     drawKeypad(ctx, app.keypad, width, height);
+    drawConfirm(ctx, app.confirm, width, height);
 
     if (Date.now() < app.toastUntil) {
       drawToast(ctx, app.toastMessage, width, height);
