@@ -1,0 +1,71 @@
+cloudfunctions/room/package.json
+  s_3d8a9b9be36981::t_ff8acacff05359 1-8
+cloudfunctions/login/index.js
+  s_3d8a9b9be36981::t_4afecddbca0f1b 1-14
+js/app.js
+  s_3d8a9b9be36981::t_2902774e880ab5 4,12,32,40,48-73,75-77,84,86,89,95,97,99,110,112,115,117-130,133,138-146,148,153,178-198
+  s_3d8a9b9be36981::t_8d6133b8e2f816 3
+  s_3d8a9b9be36981::t_3769e4931e153f 223
+cloudfunctions/login/package.json
+  s_3d8a9b9be36981::t_44481c546f3ee5 1-8
+js/screens/lobby.js
+  s_3d8a9b9be36981::t_6e333e1d43ccce 24-32,38,40
+  s_3d8a9b9be36981::t_4b9c270c3f8416 158,162,168,175,182
+js/session.js
+  s_3d8a9b9be36981::t_aa86a8df977bcc 1-2,11-18,20-25
+云开发.md
+  s_3d8a9b9be36981::t_9b07bbd1e9b921 1-39
+js/rooms/local.js
+  s_3d8a9b9be36981::t_a83af065411b71 1-203
+game.json
+  s_3d8a9b9be36981::t_3ef5cfd9c16e14 3-4
+js/platform.js
+  s_3d8a9b9be36981::t_87d658da1ec48b 123-137
+cloudfunctions/room/index.js
+  s_3d8a9b9be36981::t_7999af65104142 1-68,70-237
+  s_3d8a9b9be36981::t_01624beda814ee 69
+js/rooms.js
+  s_3d8a9b9be36981::t_3238efe29c3edf 1-3,5-10,12-13,17-18,23,27,31,35,39,43,46-47
+项目概要.md
+  s_3d8a9b9be36981::t_a297ec5fedbdb7 3
+  s_3d8a9b9be36981::t_ed2368580c48ef 62-63
+project.config.json
+  s_3d8a9b9be36981::t_75a4a437f0d1a1 27
+js/config.js
+  h_d4de67ad00ef05 6
+  s_3d8a9b9be36981::t_e4890aff6797ea 1-5
+README.md
+  s_3d8a9b9be36981::t_95f8e1cc7d4f62 18-19,21
+  s_3d8a9b9be36981::t_4c512df540501a 8
+.gitignore
+  s_3d8a9b9be36981::t_bea342efaf5e66 1-2
+js/rooms/cloud.js
+  s_3d8a9b9be36981::t_8d8440d0cfa35b 1-57
+js/cloud.js
+  s_3d8a9b9be36981::t_11cc30901eeb31 1-77
+功能需求.md
+  s_3d8a9b9be36981::t_1845b453eac0be 24
+  s_3d8a9b9be36981::t_0a4dff7c63e7a8 3
+  s_3d8a9b9be36981::t_966b9771f201c1 255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "e03f02d935f2d45dd6ed965a65abd676d6d374dc",
+  "prompts": {},
+  "humans": {
+    "h_d4de67ad00ef05": {
+      "author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  },
+  "sessions": {
+    "s_3d8a9b9be36981": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "08427dab-4344-4239-9b40-2cfc9130b0c4",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
