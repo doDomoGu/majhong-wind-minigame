@@ -120,11 +120,21 @@ export function bindPointer(canvas, handlers) {
     }
   };
 
-  if (typeof wx !== 'undefined' && typeof document === 'undefined') {
-    canvas.addEventListener('touchstart', down);
-    canvas.addEventListener('touchmove', move);
-    canvas.addEventListener('touchend', up);
-    canvas.addEventListener('touchcancel', up);
+  const canUseDomEvents = canvas && typeof canvas.addEventListener === 'function';
+  const canUseWxTouch = typeof wx !== 'undefined' && typeof wx.onTouchStart === 'function';
+
+  // 真机小游戏 canvas 没有 DOM 的 addEventListener，必须用 wx.onTouch*。
+  if (!canUseDomEvents && canUseWxTouch) {
+    wx.onTouchStart(down);
+    wx.onTouchMove(move);
+    wx.onTouchEnd(up);
+    if (wx.onTouchCancel) {
+      wx.onTouchCancel(up);
+    }
+    return;
+  }
+
+  if (!canUseDomEvents) {
     return;
   }
 

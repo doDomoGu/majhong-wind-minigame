@@ -21,19 +21,23 @@ export function createLobbyScreen(app) {
     list: { x: 0, y: 0, w: 0, h: 0 },
   };
 
-  function refresh() {
-    state.rooms = listRooms();
-    app.toast('已刷新房间列表');
+  async function refreshList(showToast) {
+    try {
+      state.rooms = await listRooms();
+      if (showToast) {
+        app.toast('已刷新房间列表');
+      }
+    } catch (error) {
+      app.toast(error.message);
+    }
   }
 
   return {
     enter() {
-      state.rooms = listRooms();
       state.scroll = 0;
+      refreshList(false);
     },
-    refreshList() {
-      state.rooms = listRooms();
-    },
+    refreshList,
     onDrag(dy) {
       const max = Math.max(0, state.rooms.length * (CARD_H + CARD_GAP) - state.list.h);
       state.scroll = Math.min(0, Math.max(-max, state.scroll + dy));
@@ -151,31 +155,31 @@ export function createLobbyScreen(app) {
     },
     async onTap(point) {
       if (hit(point, state.hits.refresh || {})) {
-        refresh();
+        await refreshList(true);
         return;
       }
       if (hit(point, state.hits.create || {})) {
-        app.createRoom();
+        await app.createRoom();
         return;
       }
       if (hit(point, state.hits.join || {})) {
         const code = await app.askRoomCode('输入房号加入');
         if (code) {
-          app.joinRoom(code);
+          await app.joinRoom(code);
         }
         return;
       }
       if (hit(point, state.hits.watch || {})) {
         const code = await app.askRoomCode('公共视角 · 输入房号');
         if (code) {
-          app.enterPublic(code);
+          await app.enterPublic(code);
         }
         return;
       }
 
       const roomHit = Object.values(state.hits).find((item) => item.room && hit(point, item));
       if (roomHit) {
-        app.openRoomFromList(roomHit.room);
+        await app.openRoomFromList(roomHit.room);
       }
     },
   };

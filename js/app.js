@@ -1,6 +1,7 @@
 import { theme, ROOM_STATUS } from './theme.js';
 import { bindPointer, createGameCanvas, eventPoint, resizeCanvas } from './platform.js';
-import { getLocalUser } from './session.js';
+import { initCloud } from './cloud.js';
+import { loginUser } from './session.js';
 import {
   addTestPlayers,
   createRoom,
@@ -8,6 +9,7 @@ import {
   joinRoom,
   leaveRoom,
   seedDemoRooms,
+  watchRoom,
 } from './rooms.js';
 import { createKeypad, drawKeypad, openKeypad, tapKeypad } from './keypad.js';
 import { drawToast } from './ui.js';
@@ -26,10 +28,8 @@ export function startApp() {
   let width = 0;
   let height = 0;
 
-  seedDemoRooms();
-
   const app = {
-    user: getLocalUser(),
+    user: { id: '', name: '登录中', avatar: '' },
     room: null,
     viewMode: 'player',
     toastMessage: '',
@@ -37,6 +37,7 @@ export function startApp() {
     keypad: createKeypad(),
     screen: null,
     screens: {},
+    roomWatcher: null,
     toast(message) {
       app.toastMessage = message;
       app.toastUntil = Date.now() + 2200;
@@ -44,27 +45,58 @@ export function startApp() {
     askRoomCode(title) {
       return openKeypad(app.keypad, title);
     },
+    subscribeRoom(id) {
+      if (app.roomWatcher && app.roomWatcher.close) {
+        app.roomWatcher.close();
+      }
+      app.roomWatcher = watchRoom(id, (room) => {
+        if (!room) {
+          if (app.screen !== 'lobby') {
+            app.room = null;
+            app.goto('lobby');
+            app.toast('房间已解散');
+          }
+          return;
+        }
+        app.room = room;
+        if (room.status === ROOM_STATUS.playing && app.screen === 'waiting' && app.viewMode === 'player') {
+          app.goto('table');
+          app.toast('满员，已随机入座');
+        }
+      });
+    },
+    unsubscribeRoom() {
+      if (app.roomWatcher && app.roomWatcher.close) {
+        app.roomWatcher.close();
+      }
+      app.roomWatcher = null;
+    },
     goto(name) {
+      if (name === 'lobby') {
+        app.unsubscribeRoom();
+      }
       app.screen = name;
       const next = app.screens[name];
       if (next && next.enter) {
         next.enter();
       }
     },
-    createRoom() {
+    async createRoom() {
       try {
-        app.room = createRoom(app.user);
+        app.room = await createRoom(app.user);
         app.viewMode = 'player';
         app.goto('waiting');
+        app.subscribeRoom(app.room.id);
         app.toast('已创建房间 ' + app.room.id);
       } catch (error) {
         app.toast(error.message);
       }
     },
-    joinRoom(id) {
+    async joinRoom(id) {
       try {
-        app.room = joinRoom(id, app.user);
+        app.room = await joinRoom(id, app.user);
         app.viewMode = 'player';
+        app.subscribeRoom(app.room.id);
         if (app.room.status === ROOM_STATUS.playing) {
           app.goto('table');
           app.toast('满员，已随机入座');
@@ -75,42 +107,50 @@ export function startApp() {
         app.toast(error.message);
       }
     },
-    openRoomFromList(room) {
+    async openRoomFromList(room) {
       if (room.status === ROOM_STATUS.waiting) {
-        app.joinRoom(room.id);
+        await app.joinRoom(room.id);
         return;
       }
-      app.enterPublic(room.id);
+      await app.enterPublic(room.id);
     },
-    enterPublic(id) {
-      const room = getRoom(id);
-      if (!room) {
-        app.toast('房间不存在');
-        return;
+    async enterPublic(id) {
+      try {
+        const room = await getRoom(id);
+        if (!room) {
+          app.toast('房间不存在');
+          return;
+        }
+        app.room = room;
+        app.viewMode = 'public';
+        app.goto('table');
+        app.subscribeRoom(room.id);
+        app.toast('已进入公共视角');
+      } catch (error) {
+        app.toast(error.message);
       }
-      app.room = room;
-      app.viewMode = 'public';
-      app.goto('table');
-      app.toast('已进入公共视角');
     },
-    leaveRoom() {
+    async leaveRoom() {
       if (!app.room) {
         app.goto('lobby');
         return;
       }
-      const result = leaveRoom(app.room.id, app.user.id);
-      app.room = null;
-      app.viewMode = 'player';
-      app.goto('lobby');
-      app.screens.lobby.refreshList();
-      app.toast(result && result.dissolved ? '房间已解散' : '已离开房间');
+      try {
+        const result = await leaveRoom(app.room.id, app.user.id);
+        app.room = null;
+        app.viewMode = 'player';
+        app.goto('lobby');
+        app.toast(result && result.dissolved ? '房间已解散' : '已离开房间');
+      } catch (error) {
+        app.toast(error.message);
+      }
     },
-    fillBots() {
+    async fillBots() {
       if (!app.room) {
         return;
       }
       try {
-        app.room = addTestPlayers(app.room.id);
+        app.room = await addTestPlayers(app.room.id);
         if (app.room.status === ROOM_STATUS.playing) {
           app.goto('table');
           app.toast('满员，已随机入座');
@@ -135,6 +175,27 @@ export function startApp() {
 
   applySize();
   app.goto('lobby');
+  boot();
+
+  async function boot() {
+    const cloudOn = await initCloud();
+    try {
+      app.user = await loginUser();
+    } catch (error) {
+      app.toast(error.message);
+    }
+
+    if (cloudOn) {
+      app.toast('已连接云开发 · ' + app.user.name);
+    } else {
+      seedDemoRooms();
+      app.toast('本地预览（未连接云）');
+    }
+
+    if (app.screens.lobby.refreshList) {
+      await app.screens.lobby.refreshList();
+    }
+  }
 
   bindPointer(canvas, {
     point: (event) => eventPoint(event, canvas, width, height),
@@ -159,7 +220,7 @@ export function startApp() {
     },
   });
 
-  if (typeof window !== 'undefined') {
+  if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
     window.addEventListener('resize', applySize);
   }
   if (typeof wx !== 'undefined' && wx.onWindowResize) {

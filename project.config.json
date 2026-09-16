@@ -24,6 +24,7 @@
     "minifyWXML": true,
     "useCompilerPlugins": false
   },
+  "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "game",
   "libVersion": "latest",
   "appid": "wx19b1f7d7af205c27",

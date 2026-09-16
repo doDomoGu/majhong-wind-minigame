@@ -1,3 +1,5 @@
+import { isCloudReady, callCloud } from './cloud.js';
+
 function createPreviewUser() {
   return {
     id: 'wx-preview-local',
@@ -6,9 +8,19 @@ function createPreviewUser() {
   };
 }
 
-export function getLocalUser() {
-  if (typeof wx !== 'undefined' && wx.getAccountInfoSync) {
-    // 微信身份接入云开发后再换成 openid；现在先用可预览的本地用户。
+export async function loginUser() {
+  if (!isCloudReady()) {
+    return createPreviewUser();
   }
-  return createPreviewUser();
+
+  const result = await callCloud('login', {});
+  if (!result || !result.ok || !result.openid) {
+    throw new Error((result && result.error) || '微信登录失败');
+  }
+
+  return {
+    id: result.openid,
+    name: result.name || ('玩家' + String(result.openid).slice(-4)),
+    avatar: '',
+  };
 }
