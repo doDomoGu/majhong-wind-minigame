@@ -1,0 +1,40 @@
+miniprogram/js/platform.js
+  s_da7cb4fea73f97::t_0d8538310a2dee 148
+  s_da7cb4fea73f97::t_56b2429e4772b7 128
+miniprogram/js/ui.js
+  s_da7cb4fea73f97::t_2e9c5cad41799a 2
+  s_da7cb4fea73f97::t_6b37824a4f1413 89,95-96,99,104-134
+miniprogram/js/screens/table.js
+  s_da7cb4fea73f97::t_a20b378e8b7dbe 305-306
+  s_da7cb4fea73f97::t_7c3c80a7740b77 162,176,180,185-186,190,210,215-230,234-235,239-240,244-246,251-254
+  s_da7cb4fea73f97::t_86cd359fd2a66c 380,390-391,406-407
+  s_da7cb4fea73f97::t_7294080e03fb08 350-351
+  s_da7cb4fea73f97::t_ea288c38176b1b 341
+  s_da7cb4fea73f97::t_f635258ec6e09c 263-266,268,270,275-276,279-280,284-285
+  s_da7cb4fea73f97::t_4291f47ac80e49 19
+  s_da7cb4fea73f97::t_c9768e4327782b 61-126
+miniprogram/js/screens/waiting.js
+  s_da7cb4fea73f97::t_7ab4dd7068e9d3 10
+  s_da7cb4fea73f97::t_f9a68e8cc7e6bb 30-32,35,40-41,46-47
+  s_da7cb4fea73f97::t_f32c88d456d1fc 87
+miniprogram/js/screens/lobby.js
+  s_da7cb4fea73f97::t_158d1ba2db4ef9 11
+  s_da7cb4fea73f97::t_a75e2b7ef4c516 62-64,73,78-80,86,96,98
+  s_da7cb4fea73f97::t_042dfcb0e05085 174-175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "59faf095ad701942f8e350a4f8421fe8758981c8",
+  "prompts": {},
+  "sessions": {
+    "s_da7cb4fea73f97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bfee8254-c28a-410f-af8b-24f6fa426b74",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
