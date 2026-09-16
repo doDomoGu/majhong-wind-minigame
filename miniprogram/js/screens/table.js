@@ -1,5 +1,4 @@
 import { theme } from '../theme.js';
-import { getSafeInsets } from '../platform.js';
 import {
   WIND_LABEL,
   computeResults,
@@ -17,6 +16,7 @@ import {
   fillRoundRect,
   hit,
   layoutColumn,
+  layoutHeader,
 } from '../ui.js';
 
 const REL_LABEL = {
@@ -58,6 +58,72 @@ function canUndo(game) {
   return !!(game && game.history && game.history.length > 1);
 }
 
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function computeBoard(area, withRiichi) {
+  const gap = 8;
+  const inner = {
+    x: area.x + 10,
+    y: area.y + 4,
+    w: Math.max(0, area.w - 20),
+    h: Math.max(0, area.h - 8),
+  };
+  const cx = inner.x + inner.w / 2;
+  const cy = inner.y + inner.h / 2;
+  let diskR = clamp(Math.min(inner.w * 0.17, inner.h * 0.17), 40, 56);
+  let sideW = clamp((inner.w - diskR * 2 - gap * 2) / 2, 70, 108);
+  let sideH = clamp(Math.min(inner.h * 0.2, 86), 62, 86);
+  let bottomW = clamp(inner.w * 0.38, 112, 140);
+  const riichiW = withRiichi ? 48 : 0;
+  const riichiGap = withRiichi ? 8 : 0;
+
+  const widthNeed = sideW * 2 + gap * 2 + diskR * 2;
+  if (widthNeed > inner.w) {
+    const overflow = widthNeed - inner.w;
+    const shrinkSide = Math.min(overflow / 2, sideW - 70);
+    sideW -= shrinkSide;
+    diskR = Math.max(40, diskR - Math.max(0, overflow - shrinkSide * 2) / 2);
+  }
+
+  let bottomH = sideH;
+  const heightNeed = sideH + gap + diskR * 2 + gap + bottomH;
+  if (heightNeed > inner.h) {
+    const overflow = heightNeed - inner.h;
+    diskR = Math.max(38, diskR - overflow * 0.45);
+    const remain = sideH + gap + diskR * 2 + gap + bottomH - inner.h;
+    if (remain > 0) {
+      sideH = Math.max(60, sideH - remain / 2);
+      bottomH = Math.max(60, bottomH - remain / 2);
+    }
+  }
+
+  const bottomGroup = bottomW + riichiGap + riichiW;
+  const bottomX = cx - bottomGroup / 2;
+  return {
+    disk: {
+      x: cx - diskR,
+      y: cy - diskR,
+      w: diskR * 2,
+      h: diskR * 2,
+      r: diskR,
+      cx,
+      cy,
+    },
+    seats: {
+      top: { side: 'top', x: cx - sideW / 2, y: cy - diskR - gap - sideH, w: sideW, h: sideH },
+      left: { side: 'left', x: cx - diskR - gap - sideW, y: cy - sideH / 2, w: sideW, h: sideH },
+      right: { side: 'right', x: cx + diskR + gap, y: cy - sideH / 2, w: sideW, h: sideH },
+      bottom: { side: 'bottom', x: bottomX, y: cy + diskR + gap, w: bottomW, h: bottomH },
+    },
+    riichi: withRiichi
+      ? { x: bottomX + bottomW + riichiGap, y: cy + diskR + gap, w: riichiW, h: bottomH }
+      : null,
+    scale: clamp(sideH / 86, 0.72, 1),
+  };
+}
+
 export function createTableScreen(app) {
   const state = {
     hits: {},
@@ -93,7 +159,7 @@ export function createTableScreen(app) {
       const pad = 18;
       const room = app.room;
       const game = room && room.game;
-      const insets = getSafeInsets();
+      const header = layoutHeader(col, { pad });
       state.hits = {};
 
       if (!room) {
@@ -107,28 +173,21 @@ export function createTableScreen(app) {
       fillRoundRect(ctx, col.x, col.y, col.w, col.h, 0, theme.bg);
 
       const title = isPublic() ? '公共视角' : '个人风向盘';
-      drawText(ctx, title, col.x + pad, col.y + 48, {
+      drawText(ctx, title, header.titleX, header.titleY, {
         size: 22,
         weight: '700',
       });
-      drawText(ctx, '房 ' + room.id, col.x + pad, col.y + 74, {
+      drawText(ctx, '房 ' + room.id, header.titleX, header.subY, {
         size: 13,
         color: theme.muted,
       });
 
-      const refreshBtn = {
-        x: col.x + col.w - pad - 72,
-        y: col.y + 32,
-        w: 72,
-        h: 36,
-      };
-      state.hits.refresh = refreshBtn;
-      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
+      state.hits.refresh = header.refresh;
+      drawGhostButton(ctx, header.refresh, '刷新', { size: 14, color: theme.gold, border: theme.gold });
 
-      const bottomLimit = Math.min(col.y + col.h, height - insets.bottom) - 16;
       const leave = {
         x: col.x + pad,
-        y: bottomLimit - 46,
+        y: col.y + col.h - 46,
         w: col.w - pad * 2,
         h: 46,
       };
@@ -148,55 +207,51 @@ export function createTableScreen(app) {
       }
 
       const myWind = playerWind(room.seats, app.user && app.user.id);
-      const layout = layoutWinds(app.viewMode, myWind);
+      const winds = layoutWinds(app.viewMode, myWind);
       const phase = game.phase;
       const acting = !isPublic() && seated(room) && phase !== 'finished';
       const showResults = phase === 'finished';
-      const actionRows = showResults ? 2 : acting ? (phase === 'settling' ? 2 : 1) : 0;
-      const actionH = actionRows ? actionRows * 52 + 8 : 0;
-      const tableBottom = leave.y - 12 - actionH;
-      const tableTop = col.y + 96;
-      const cx = col.x + col.w / 2;
-      const cy = tableTop + (tableBottom - tableTop) / 2;
-      const reachX = Math.min(122, col.w / 2 - 78);
-      const reachY = Math.min(156, (tableBottom - tableTop) / 2 - 78);
-
-      const diskR = 62;
-      const disk = { x: cx - diskR, y: cy - diskR, w: diskR * 2, h: diskR * 2 };
       const canToggleScore = !isPublic() && seated(room) && !showResults;
-      fillRoundRect(ctx, disk.x, disk.y, disk.w, disk.h, diskR, theme.card);
+      const showActions = acting || (showResults && canUndo(game) && !isPublic() && seated(room));
+      const actionH = showActions ? 44 : 0;
+      const hintH = 20;
+      const actionsY = leave.y - (actionH ? 10 + actionH : 0);
+      const hintY = actionsY - 8 - hintH;
+      const boardArea = {
+        x: col.x,
+        y: header.bottom,
+        w: col.w,
+        h: Math.max(160, hintY - header.bottom),
+      };
+      const withRiichi = acting && phase === 'playing';
+      const board = computeBoard(boardArea, withRiichi);
+      const disk = board.disk;
+
+      fillRoundRect(ctx, disk.x, disk.y, disk.w, disk.h, disk.r, theme.card);
       if (canToggleScore) {
         state.hits.disk = disk;
       }
-      drawText(ctx, formatRound(game), cx, cy - 16, {
-        size: 24,
+      drawText(ctx, formatRound(game), disk.cx, disk.cy - disk.r * 0.22, {
+        size: clamp(disk.r * 0.38, 18, 24),
         weight: '700',
         align: 'center',
       });
-      drawText(ctx, '本场 ' + game.honba + '  ·  供托 ' + game.kyotaku, cx, cy + 10, {
-        size: 12,
+      drawText(ctx, '本场 ' + game.honba + '  ·  供托 ' + game.kyotaku, disk.cx, disk.cy + disk.r * 0.12, {
+        size: clamp(disk.r * 0.18, 10, 12),
         align: 'center',
         color: theme.muted,
       });
-      drawText(ctx, '亲 ' + WIND_LABEL[game.dealerWind], cx, cy + 28, {
-        size: 13,
+      const modeText = canToggleScore ? (state.scoreMode === 'diff' ? '分差' : '点数') : '';
+      drawText(ctx, '亲 ' + WIND_LABEL[game.dealerWind] + (modeText ? ' · ' + modeText : ''), disk.cx, disk.cy + disk.r * 0.42, {
+        size: clamp(disk.r * 0.2, 11, 13),
         align: 'center',
         color: theme.gold,
       });
-      if (canToggleScore) {
-        drawText(ctx, state.scoreMode === 'diff' ? '分差' : '点数', cx, cy + 46, {
-          size: 11,
-          align: 'center',
-          color: state.scoreMode === 'diff' ? theme.gold : theme.muted,
-        });
-      }
 
-      const sides = showResults ? [] : [
-        { side: 'bottom', wind: layout.bottom, x: cx - 107, y: cy + reachY - 10, w: 148, h: 94 },
-        { side: 'top', wind: layout.top, x: cx - 74, y: cy - reachY - 84, w: 148, h: 94 },
-        { side: 'left', wind: layout.left, x: cx - reachX - 56, y: cy - 50, w: 118, h: 100 },
-        { side: 'right', wind: layout.right, x: cx + reachX - 62, y: cy - 50, w: 118, h: 100 },
-      ];
+      const sides = showResults ? [] : ['top', 'left', 'right', 'bottom'].map((side) => ({
+        ...board.seats[side],
+        wind: winds[side],
+      }));
 
       sides.forEach((pos) => {
         const playerId = room.seats ? room.seats[pos.wind] : null;
@@ -205,34 +260,29 @@ export function createTableScreen(app) {
         const reached = !!(playerId && game.riichi && game.riichi[playerId]);
         const mine = playerId && app.user && playerId === app.user.id;
         const input = game.settle && playerId ? game.settle.inputs[playerId] : null;
-        fillRoundRect(ctx, pos.x, pos.y, pos.w, pos.h, 14, mine ? theme.cardHover : theme.bgRaised);
+        fillRoundRect(ctx, pos.x, pos.y, pos.w, pos.h, 12, mine ? theme.cardHover : theme.bgRaised);
 
-        if (acting && phase === 'playing' && pos.side === 'bottom' && playerId) {
-          const riichiBtn = {
-            x: pos.x + pos.w + 8,
-            y: pos.y,
-            w: 58,
-            h: pos.h,
-          };
-          state.hits.riichiSelf = { ...riichiBtn, playerId, reached };
+        if (withRiichi && pos.side === 'bottom' && playerId && board.riichi) {
+          state.hits.riichiSelf = { ...board.riichi, playerId, reached };
           if (reached) {
-            drawGhostButton(ctx, riichiBtn, '取消', { color: theme.gold, border: theme.gold, size: 15 });
+            drawGhostButton(ctx, board.riichi, '取消', { color: theme.gold, border: theme.gold, size: 14 });
           } else {
-            drawButton(ctx, riichiBtn, '立直', { size: 15 });
+            drawButton(ctx, board.riichi, '立直', { size: 14 });
           }
         }
 
         const name = player ? player.name : '空';
-        drawAvatar(ctx, pos.x + pos.w / 2 - 16, pos.y + 8, 32, name);
+        const avatar = clamp(28 * board.scale, 22, 32);
+        drawAvatar(ctx, pos.x + pos.w / 2 - avatar / 2, pos.y + 6, avatar, name);
         const windText = WIND_LABEL[pos.wind] + (isDealer ? '亲' : '');
         const rel = isPublic() ? '' : REL_LABEL[pos.side];
-        drawText(ctx, windText + (rel ? ' · ' + rel : ''), pos.x + pos.w / 2, pos.y + 50, {
-          size: 11,
+        drawText(ctx, windText + (rel ? ' · ' + rel : ''), pos.x + pos.w / 2, pos.y + pos.h * 0.52, {
+          size: clamp(11 * board.scale, 10, 11),
           align: 'center',
           color: isDealer ? theme.gold : theme.muted,
         });
-        drawText(ctx, name, pos.x + pos.w / 2, pos.y + 66, {
-          size: 12,
+        drawText(ctx, name, pos.x + pos.w / 2, pos.y + pos.h * 0.7, {
+          size: clamp(12 * board.scale, 10, 12),
           align: 'center',
           color: player ? theme.text : theme.muted,
         });
@@ -252,8 +302,8 @@ export function createTableScreen(app) {
             scoreColor = theme.muted;
           }
         }
-        drawText(ctx, scoreText, pos.x + pos.w / 2, pos.y + 82, {
-          size: 13,
+        drawText(ctx, scoreText, pos.x + pos.w / 2, pos.y + pos.h * 0.88, {
+          size: clamp(13 * board.scale, 11, 13),
           weight: '600',
           align: 'center',
           color: scoreColor,
@@ -288,7 +338,7 @@ export function createTableScreen(app) {
         hint = '只读，不占座';
       }
       if (hint) {
-        drawText(ctx, hint, cx, tableBottom - 2, {
+        drawText(ctx, hint, col.x + col.w / 2, hintY + hintH / 2, {
           size: 12,
           align: 'center',
           color: game.settle && game.settle.error ? theme.danger : theme.muted,
@@ -297,8 +347,8 @@ export function createTableScreen(app) {
 
       if (showResults) {
         const ranks = resultsOf(room);
-        const panelH = Math.min(220, 56 + ranks.length * 28);
-        const panelY = leave.y - 12 - panelH - (canUndo(game) && !isPublic() ? 56 : 0);
+        const panelH = Math.min(boardArea.h, 56 + ranks.length * 28);
+        const panelY = boardArea.y + Math.max(0, (boardArea.h - panelH) / 2);
         fillRoundRect(ctx, col.x + pad, panelY, col.w - pad * 2, panelH, 14, theme.card);
         drawText(ctx, '半庄结束', col.x + col.w / 2, panelY + 22, {
           size: 16,
@@ -327,7 +377,7 @@ export function createTableScreen(app) {
         if (canUndo(game) && !isPublic() && seated(room)) {
           const undo = {
             x: col.x + pad,
-            y: leave.y - 56,
+            y: actionsY,
             w: col.w - pad * 2,
             h: 44,
           };
@@ -337,8 +387,8 @@ export function createTableScreen(app) {
       } else if (acting && phase === 'playing') {
         const gap = 10;
         const btnW = (col.w - pad * 2 - gap) / 2;
-        const settle = { x: col.x + pad, y: leave.y - 56, w: btnW, h: 44 };
-        const undo = { x: col.x + pad + btnW + gap, y: leave.y - 56, w: btnW, h: 44 };
+        const settle = { x: col.x + pad, y: actionsY, w: btnW, h: 44 };
+        const undo = { x: col.x + pad + btnW + gap, y: actionsY, w: btnW, h: 44 };
         state.hits.settle = settle;
         drawButton(ctx, settle, '发起结算');
         if (canUndo(game)) {
@@ -353,8 +403,8 @@ export function createTableScreen(app) {
         const hasSuggest = !!suggested;
         const gap = 10;
         const btnW = (col.w - pad * 2 - gap) / 2;
-        const zero = { x: col.x + pad, y: leave.y - 56, w: btnW, h: 44 };
-        const fill = { x: col.x + pad + btnW + gap, y: leave.y - 56, w: btnW, h: 44 };
+        const zero = { x: col.x + pad, y: actionsY, w: btnW, h: 44 };
+        const fill = { x: col.x + pad + btnW + gap, y: actionsY, w: btnW, h: 44 };
         state.hits.zero = zero;
         state.hits.fill = fill;
         drawGhostButton(ctx, zero, '无变化');

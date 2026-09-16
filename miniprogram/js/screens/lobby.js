@@ -8,6 +8,7 @@ import {
   fillRoundRect,
   hit,
   layoutColumn,
+  layoutHeader,
 } from '../ui.js';
 
 const CARD_H = 78;
@@ -58,8 +59,9 @@ export function createLobbyScreen(app) {
 
       fillRoundRect(ctx, col.x, col.y, col.w, col.h, 0, theme.bg);
 
-      drawText(ctx, '立直麻将 · 风向盘', col.x + pad, col.y + 52, {
-        size: 24,
+      const header = layoutHeader(col, { pad, avatar: true });
+      drawText(ctx, '立直麻将 · 风向盘', header.titleX, header.titleY, {
+        size: 22,
         weight: '700',
       });
       let subtitle = '选择或创建一个房间';
@@ -68,22 +70,20 @@ export function createLobbyScreen(app) {
       } else if (app.myRoom) {
         subtitle = '你已在房间 ' + app.myRoom.id;
       }
-      drawText(ctx, subtitle, col.x + pad, col.y + 80, {
+      drawText(ctx, subtitle, header.titleX, header.subY, {
         size: 14,
         color: app.loginError && !app.user.id ? theme.danger : theme.muted,
       });
 
-      const avatarX = col.x + col.w - pad - 40;
-      const avatarY = col.y + 28;
-      state.hits.profile = { x: avatarX - 8, y: avatarY, w: 48, h: 74 };
-      drawAvatar(ctx, avatarX, avatarY, 40, app.user.name);
-      drawText(ctx, app.user.name || '登录中', avatarX + 20, avatarY + 52, {
+      state.hits.profile = header.profile;
+      drawAvatar(ctx, header.avatar.x, header.avatar.y, header.avatar.w, app.user.name);
+      drawText(ctx, app.user.name || '登录中', header.avatar.x + header.avatar.w / 2, header.avatar.y + 52, {
         size: 12,
         align: 'center',
         color: theme.muted,
       });
       if (app.user.id) {
-        drawText(ctx, '点击改名', avatarX + 20, avatarY + 68, {
+        drawText(ctx, '点击改名', header.avatar.x + header.avatar.w / 2, header.avatar.y + 68, {
           size: 10,
           align: 'center',
           color: theme.gold,
@@ -93,9 +93,9 @@ export function createLobbyScreen(app) {
       const bottomH = 156;
       state.list = {
         x: col.x + pad,
-        y: col.y + 118,
+        y: header.bottom + 8,
         w: col.w - pad * 2,
-        h: col.h - 118 - bottomH - 8,
+        h: col.h - (header.bottom - col.y) - bottomH - 16,
       };
 
       ctx.save();
@@ -171,14 +171,8 @@ export function createLobbyScreen(app) {
         drawGhostButton(ctx, watch, '公共视角');
       }
 
-      const refreshBtn = {
-        x: avatarX - 84,
-        y: col.y + 36,
-        w: 72,
-        h: 32,
-      };
-      state.hits.refresh = refreshBtn;
-      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
+      state.hits.refresh = header.refresh;
+      drawGhostButton(ctx, header.refresh, '刷新', { size: 14, color: theme.gold, border: theme.gold });
     },
     async onTap(point) {
       if (hit(point, state.hits.profile || {})) {

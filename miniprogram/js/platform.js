@@ -125,7 +125,7 @@ export function askText(options) {
   });
 }
 
-function getMenuButtonRect() {
+export function getMenuButtonRect() {
   if (typeof wx === 'undefined' || typeof wx.getMenuButtonBoundingClientRect !== 'function') {
     return null;
   }
@@ -145,12 +145,7 @@ export function getSafeInsets() {
   const width = info.screenWidth || 0;
   const height = info.screenHeight || 0;
   const safe = info.safeArea || {};
-  const menu = getMenuButtonRect();
-  const top = Math.max(
-    safe.top || 0,
-    info.statusBarHeight || 0,
-    menu ? menu.bottom : 0,
-  );
+  const top = Math.max(safe.top || 0, info.statusBarHeight || 0);
   return {
     top,
     right: Math.max(0, width - (safe.right || width)),

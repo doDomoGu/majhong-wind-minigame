@@ -1,5 +1,4 @@
 import { theme, ROOM_STATUS } from '../theme.js';
-import { getSafeInsets } from '../platform.js';
 import {
   drawAvatar,
   drawButton,
@@ -8,6 +7,7 @@ import {
   fillRoundRect,
   hit,
   layoutColumn,
+  layoutHeader,
 } from '../ui.js';
 
 export function createWaitingScreen(app) {
@@ -27,29 +27,24 @@ export function createWaitingScreen(app) {
 
       fillRoundRect(ctx, col.x, col.y, col.w, col.h, 0, theme.bg);
 
-      drawText(ctx, '等待开局', col.x + pad, col.y + 52, {
-        size: 24,
+      const header = layoutHeader(col, { pad });
+      drawText(ctx, '等待开局', header.titleX, header.titleY, {
+        size: 22,
         weight: '700',
       });
-      drawText(ctx, '房号 ' + room.id + '  ·  ' + room.players.length + '/4', col.x + pad, col.y + 82, {
+      drawText(ctx, '房号 ' + room.id + '  ·  ' + room.players.length + '/4', header.titleX, header.subY, {
         size: 15,
         color: theme.muted,
       });
 
-      const refreshBtn = {
-        x: col.x + col.w - pad - 72,
-        y: col.y + 36,
-        w: 72,
-        h: 36,
-      };
-      state.hits.refresh = refreshBtn;
-      drawGhostButton(ctx, refreshBtn, '刷新', { size: 14, color: theme.gold, border: theme.gold });
+      state.hits.refresh = header.refresh;
+      drawGhostButton(ctx, header.refresh, '刷新', { size: 14, color: theme.gold, border: theme.gold });
 
       const slots = [0, 1, 2, 3];
       const gap = 12;
       const slotW = (col.w - pad * 2 - gap) / 2;
-      const slotH = 110;
-      const gridY = col.y + 120;
+      const slotH = Math.min(110, Math.max(88, (col.h - (header.bottom - col.y) - 180) / 2));
+      const gridY = header.bottom + 12;
 
       slots.forEach((index) => {
         const colIndex = index % 2;
@@ -87,11 +82,9 @@ export function createWaitingScreen(app) {
         color: theme.muted,
       });
 
-      const insets = getSafeInsets();
-      const bottomLimit = Math.min(col.y + col.h, height - insets.bottom) - 20;
       const leave = {
         x: col.x + pad,
-        y: bottomLimit - 46,
+        y: col.y + col.h - 46,
         w: col.w - pad * 2,
         h: 46,
       };

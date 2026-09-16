@@ -1,5 +1,5 @@
 import { theme } from './theme.js';
-import { getSafeInsets } from './platform.js';
+import { getMenuButtonRect, getSafeInsets } from './platform.js';
 
 export function hit(point, rect) {
   return point.x >= rect.x
@@ -86,18 +86,51 @@ export function drawToast(ctx, message, width, height) {
 
 export function layoutColumn(width, height) {
   const insets = getSafeInsets();
-  const padTop = insets.top > 0 ? 8 : 0;
+  const padTop = insets.top > 0 ? 6 : 0;
   const padBottom = insets.bottom > 0 ? 8 : 0;
   const safeX = insets.left;
   const safeY = insets.top + padTop;
   const safeW = Math.max(0, width - insets.left - insets.right);
   const safeH = Math.max(0, height - insets.top - insets.bottom - padTop - padBottom);
-  const w = Math.min(safeW, 390);
-  const h = Math.min(safeH, 844);
+  const w = safeW <= 480 ? safeW : Math.min(safeW, 390);
+  const h = safeH;
   return {
     x: Math.round(safeX + (safeW - w) / 2),
-    y: Math.round(safeY + (safeH - h) / 2),
+    y: Math.round(safeY),
     w,
     h,
+  };
+}
+
+export function layoutHeader(col, options = {}) {
+  const pad = options.pad == null ? 18 : options.pad;
+  const menu = getMenuButtonRect();
+  let rightLimit = col.x + col.w - pad;
+  if (menu && menu.left > col.x + 96) {
+    rightLimit = Math.min(rightLimit, menu.left - 8);
+  }
+  const top = col.y + 8;
+  const showAvatar = !!options.avatar;
+  const avatarSize = 40;
+  const avatar = showAvatar
+    ? { x: rightLimit - avatarSize, y: top, w: avatarSize, h: avatarSize }
+    : null;
+  const refreshRight = avatar ? avatar.x - 10 : rightLimit;
+  const refresh = {
+    x: refreshRight - 72,
+    y: top + (showAvatar ? 4 : 2),
+    w: 72,
+    h: 32,
+  };
+  return {
+    titleX: col.x + pad,
+    titleY: top + 18,
+    subY: top + 42,
+    refresh,
+    avatar,
+    profile: avatar
+      ? { x: avatar.x - 8, y: avatar.y, w: avatarSize + 16, h: 74 }
+      : null,
+    bottom: top + (showAvatar ? 76 : 56),
   };
 }
