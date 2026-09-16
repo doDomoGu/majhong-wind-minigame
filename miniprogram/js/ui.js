@@ -1,4 +1,5 @@
 import { theme } from './theme.js';
+import { getSafeInsets } from './platform.js';
 
 export function hit(point, rect) {
   return point.x >= rect.x
@@ -75,7 +76,7 @@ export function drawToast(ctx, message, width, height) {
   const w = Math.min(width - 48, textWidth + 40);
   const h = 44;
   const x = (width - w) / 2;
-  const y = height * 0.18;
+  const y = Math.max(getSafeInsets().top + 12, height * 0.16);
   fillRoundRect(ctx, x, y, w, h, 22, 'rgba(20, 28, 40, 0.92)');
   drawText(ctx, message, width / 2, y + h / 2, {
     size: 15,
@@ -84,11 +85,18 @@ export function drawToast(ctx, message, width, height) {
 }
 
 export function layoutColumn(width, height) {
-  const w = Math.min(width, 390);
-  const h = Math.min(height, 844);
+  const insets = getSafeInsets();
+  const padTop = insets.top > 0 ? 8 : 0;
+  const padBottom = insets.bottom > 0 ? 8 : 0;
+  const safeX = insets.left;
+  const safeY = insets.top + padTop;
+  const safeW = Math.max(0, width - insets.left - insets.right);
+  const safeH = Math.max(0, height - insets.top - insets.bottom - padTop - padBottom);
+  const w = Math.min(safeW, 390);
+  const h = Math.min(safeH, 844);
   return {
-    x: Math.round((width - w) / 2),
-    y: Math.round((height - h) / 2),
+    x: Math.round(safeX + (safeW - w) / 2),
+    y: Math.round(safeY + (safeH - h) / 2),
     w,
     h,
   };

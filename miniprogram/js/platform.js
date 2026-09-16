@@ -125,16 +125,34 @@ export function askText(options) {
   });
 }
 
+function getMenuButtonRect() {
+  if (typeof wx === 'undefined' || typeof wx.getMenuButtonBoundingClientRect !== 'function') {
+    return null;
+  }
+  try {
+    const rect = wx.getMenuButtonBoundingClientRect();
+    if (rect && rect.width && rect.bottom) {
+      return rect;
+    }
+  } catch (error) {
+    // 部分基础库在游戏里没有胶囊按钮
+  }
+  return null;
+}
+
 export function getSafeInsets() {
   const info = getWindowInfo();
   const width = info.screenWidth || 0;
   const height = info.screenHeight || 0;
-  const safe = info.safeArea;
-  if (!safe) {
-    return { top: 0, right: 0, bottom: 0, left: 0 };
-  }
+  const safe = info.safeArea || {};
+  const menu = getMenuButtonRect();
+  const top = Math.max(
+    safe.top || 0,
+    info.statusBarHeight || 0,
+    menu ? menu.bottom : 0,
+  );
   return {
-    top: Math.max(0, safe.top || 0),
+    top,
     right: Math.max(0, width - (safe.right || width)),
     bottom: Math.max(0, height - (safe.bottom || height)),
     left: Math.max(0, safe.left || 0),
