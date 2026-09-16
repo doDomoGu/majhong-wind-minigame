@@ -1,0 +1,60 @@
+js/screens/waiting.js
+  s_3d8a9b9be36981::t_2e22e6fc8f70d7 38-46
+  s_3d8a9b9be36981::t_20e690a78ef18f 109-113,115,119
+cloudfunctions/room/index.js
+  s_3d8a9b9be36981::t_41070f2b23c3af 217-220
+js/rooms/cloud.js
+  s_3d8a9b9be36981::t_2db70be0646b8a 15-19
+云开发.md
+  s_3d8a9b9be36981::t_8f7e92152e3714 33
+js/screens/table.js
+  s_3d8a9b9be36981::t_0e9cd3e8252b67 98-102
+  s_3d8a9b9be36981::t_4b8e9b2d08a4ec 6
+  s_3d8a9b9be36981::t_9839de1db87d8b 40-48
+js/rooms/local.js
+  s_3d8a9b9be36981::t_22fc60799afaa7 101-104
+.gitignore
+  h_d4de67ad00ef05 3
+js/app.js
+  s_3d8a9b9be36981::t_d2146aa1d2b3fb 193-227
+  s_3d8a9b9be36981::t_15e1900d1c7151 35
+  s_3d8a9b9be36981::t_c1bb37eef5f5da 276
+  s_3d8a9b9be36981::t_772c5f2e02ee43 56-57
+  s_3d8a9b9be36981::t_fb24e07bc3c414 8
+  s_3d8a9b9be36981::t_ede062e9600e38 185
+  s_3d8a9b9be36981::t_52a5794ee8e62f 102
+  s_3d8a9b9be36981::t_c66aa6b628ed00 138-176
+  s_3d8a9b9be36981::t_1df3a89f448425 90
+js/rooms.js
+  s_3d8a9b9be36981::t_ec9e822f601f85 30-33
+js/screens/lobby.js
+  s_3d8a9b9be36981::t_b84389900d36d0 197-204
+  s_3d8a9b9be36981::t_e00f1edbb56f00 32-33
+  s_3d8a9b9be36981::t_223cc565e2c470 90
+  s_3d8a9b9be36981::t_be6e50acf31118 65
+  s_3d8a9b9be36981::t_67a7a5d226fb4c 24-27,31,34-35
+  s_3d8a9b9be36981::t_b6bc26b7698dab 144-156
+  s_3d8a9b9be36981::t_cb3ee610af2314 159-162,165
+  s_3d8a9b9be36981::t_0019fb8011d2f5 172-175
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "98f6ed0532dc5ae4635c0f932b7cfc5c5dd01adc",
+  "prompts": {},
+  "humans": {
+    "h_d4de67ad00ef05": {
+      "author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  },
+  "sessions": {
+    "s_3d8a9b9be36981": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "08427dab-4344-4239-9b40-2cfc9130b0c4",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
