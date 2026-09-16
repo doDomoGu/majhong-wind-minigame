@@ -1,0 +1,94 @@
+miniprogram/js/screens/table.js
+  s_da7cb4fea73f97::t_9bf47530f6877e 195
+  s_da7cb4fea73f97::t_f2cc13bd0a9ce7 353
+  s_da7cb4fea73f97::t_da09abe1b8c9ae 239-255,259
+  s_da7cb4fea73f97::t_2efddb6d72d21c 194
+  s_da7cb4fea73f97::t_f23cedd1929c97 2-11,22-60,62-64,66-84,87-88,90,93,95-96,103-106,109-111,114-115,121,128-164,171-172,176,182-185,196-198,201,203-209,223-234,256-258,261-277,280-281,283,287-351,354-360,368-373,377-380,383-392,402,407-421,427-434,439,441-442,444,446-447,452-546
+  s_da7cb4fea73f97::t_3cc6b81f127478 65
+  s_da7cb4fea73f97::t_ee137def537e3e 406
+  s_da7cb4fea73f97::t_26b12e830497dc 165-170,181,186-192
+  s_da7cb4fea73f97::t_a7f3132e11cd7d 210-222
+  s_da7cb4fea73f97::t_2e0d3f5baf0b7e 423
+  s_da7cb4fea73f97::t_a50c9d5c2071f5 282
+  s_da7cb4fea73f97::t_6bbf05d84ae340 393-396
+  s_da7cb4fea73f97::t_dd10fb7f618e14 422,424-426,435-438,440,443,445
+  s_da7cb4fea73f97::t_c532f1957504fe 89
+  s_da7cb4fea73f97::t_867070ce40827d 352,361-367
+  s_da7cb4fea73f97::t_4cc6c2919c05b6 284-286
+miniprogram/js/rooms/cloud.js
+  s_da7cb4fea73f97::t_376ba294e0bfd9 68-112
+云开发.md
+  s_da7cb4fea73f97::t_25c34051d3394c 34,37
+  s_da7cb4fea73f97::t_782419493e31dd 44
+miniprogram/js/app.js
+  s_da7cb4fea73f97::t_cbe3dfccfc9265 81-93,95
+  s_da7cb4fea73f97::t_dcf9237111f88d 13-17
+  s_da7cb4fea73f97::t_f81e48ca2dee99 293
+  s_da7cb4fea73f97::t_46f2d76e1e109f 310
+  s_da7cb4fea73f97::t_66b72afbff4b21 22
+  s_da7cb4fea73f97::t_dcf3aa8c52831c 242-292,294-303,309,311-313
+  s_da7cb4fea73f97::t_4efe1097ca4d13 49
+  s_da7cb4fea73f97::t_71bb20d86880bc 3
+  s_da7cb4fea73f97::t_2f2027e7fbf1a4 432
+  s_da7cb4fea73f97::t_5a08127c6026ac 473
+  s_da7cb4fea73f97::t_a258a32884efe9 445-448
+  s_da7cb4fea73f97::t_db02dd1523a17b 60-65
+miniprogram/js/rooms.js
+  s_da7cb4fea73f97::t_0ecf0435752c54 59-78
+cloudfunctions/room/gameLogic.js
+  s_da7cb4fea73f97::t_9d02763694c1e7 479
+  s_da7cb4fea73f97::t_f5a6a6f5bb5c37 504,506-508,510-513
+  s_da7cb4fea73f97::t_6fa93962e57765 1-133,268-281,283-284,286,288,290-298,300-478,480-503,505,509,514-536
+  s_da7cb4fea73f97::t_e70093c0d560c4 134-267,282,285,287,289,299
+miniprogram/js/game/rules.js
+  s_da7cb4fea73f97::t_b8448b328b5393 479
+  s_da7cb4fea73f97::t_b2af6ea67b536f 504,506-508,510-513
+  s_da7cb4fea73f97::t_fb2522fe4e07a9 134-267,282,285,287,289,299
+  s_da7cb4fea73f97::t_6a9bbbd2ba0c27 1-133,268-281,283-284,286,288,290-298,300-478,480-503,505,509,514
+miniprogram/js/confirm.js
+  s_da7cb4fea73f97::t_23bcf2ce47cc7b 1-113
+miniprogram/js/cloud.js
+  s_da7cb4fea73f97::t_d57168cba73af2 100
+cloudfunctions/room/index.js
+  s_da7cb4fea73f97::t_d82f264c058961 28
+  s_da7cb4fea73f97::t_e717963e13a5a2 260
+  s_da7cb4fea73f97::t_f19ab06046fcbb 337
+  s_da7cb4fea73f97::t_5b6528efaf6bb8 50
+  s_da7cb4fea73f97::t_3b474071294f1e 68-72,76-154
+  s_da7cb4fea73f97::t_f561c636f7cfaa 63
+  s_da7cb4fea73f97::t_30da260ac88829 291
+  s_da7cb4fea73f97::t_dc8a8e86f38465 378-392
+  s_da7cb4fea73f97::t_e36a5130be136d 7
+miniprogram/js/platform.js
+  s_da7cb4fea73f97::t_948dd909d2aac1 65-89
+miniprogram/js/rooms/local.js
+  s_da7cb4fea73f97::t_4864cb16aaeab8 288-354
+  s_da7cb4fea73f97::t_dff305838a6ccf 62
+  s_da7cb4fea73f97::t_9ebe1413207bd2 49
+  s_da7cb4fea73f97::t_02db844641bd76 5
+  s_da7cb4fea73f97::t_3e88a6952e7218 2-4,6-10
+  s_da7cb4fea73f97::t_f627ccf85d646b 28
+  s_da7cb4fea73f97::t_4ba6de33b1f741 96-101
+  s_da7cb4fea73f97::t_9b8cf641d2d33e 117,122-143
+miniprogram/js/keypad.js
+  s_da7cb4fea73f97::t_44fb0ed7f846e4 136-138,141,146-185
+  s_da7cb4fea73f97::t_b2806ddd45268c 7,16,18,27-28
+  s_da7cb4fea73f97::t_0b5b174ad14c0a 63-66,73-75
+  s_da7cb4fea73f97::t_9df3dd9892dfa3 51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "6c4509d3ede502a3b24f0043e35f083cbc7eff0a",
+  "prompts": {},
+  "sessions": {
+    "s_da7cb4fea73f97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bfee8254-c28a-410f-af8b-24f6fa426b74",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
