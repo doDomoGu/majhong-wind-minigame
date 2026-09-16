@@ -1,0 +1,59 @@
+.gitignore
+  s_da7cb4fea73f97::t_f7665819be1381 3
+cloudfunctions/login/index.js
+  s_da7cb4fea73f97::t_4a3d4f99c7fe66 117
+  s_da7cb4fea73f97::t_a6e4bdddf38fcc 5-114,118-119,121-128
+README.md
+  s_da7cb4fea73f97::t_179a737a426c2c 15-21,28
+project.private.config.json
+  s_da7cb4fea73f97::t_d82ec23d07b085 4-13
+miniprogram/js/platform.js
+  s_da7cb4fea73f97::t_9ffec040701883 120-130
+  s_da7cb4fea73f97::t_d53cc6b7c6e28f 1-6,8-15,19-62
+miniprogram/game.js
+  s_da7cb4fea73f97::t_8762b9cc9a9dec 2,4-6
+云开发.md
+  s_da7cb4fea73f97::t_8ffefc079ed979 43
+  s_da7cb4fea73f97::t_fe0e59eecf7397 9
+  s_da7cb4fea73f97::t_ac495a5ca934df 42
+  s_da7cb4fea73f97::t_d345886a1b119a 49
+  s_da7cb4fea73f97::t_91a7c7cec52db7 3
+  s_da7cb4fea73f97::t_8410fe32973aba 10-11,13
+  s_da7cb4fea73f97::t_f932ad7f906752 15-23
+cloudfunctions/room/index.js
+  s_da7cb4fea73f97::t_24ba541bb9e3c4 199,204
+  s_da7cb4fea73f97::t_54a3f4dd7bf4fb 244,249
+  s_da7cb4fea73f97::t_34c2fedb17173f 62-69
+  s_da7cb4fea73f97::t_5bf01aa6013175 190,202
+  s_da7cb4fea73f97::t_4510c41ca257f6 169,174
+  s_da7cb4fea73f97::t_a814ab8074add1 161-162
+  s_da7cb4fea73f97::t_1789298242f18a 106-117,126,130-131
+  s_da7cb4fea73f97::t_cb621cd2f5ef07 209,214-219,222-225,228-236,239
+  s_da7cb4fea73f97::t_d0aa93ff85c128 286
+  s_da7cb4fea73f97::t_345ef214f80570 31-50
+  s_da7cb4fea73f97::t_cfd9fd56c0643c 6
+project.config.json
+  s_da7cb4fea73f97::t_dfd15f56bf3d81 34,38,42-43
+  s_da7cb4fea73f97::t_67a2445f40afaa 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "f5b8f5a964d2137536e77dc2949a3ee46a0d6c64",
+  "prompts": {},
+  "humans": {
+    "h_d4de67ad00ef05": {
+      "author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  },
+  "sessions": {
+    "s_da7cb4fea73f97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bfee8254-c28a-410f-af8b-24f6fa426b74",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
