@@ -1,0 +1,28 @@
+js/config.example.js
+  s_da7cb4fea73f97::t_d32c9a91b99b8b 1-7
+云开发.md
+  s_da7cb4fea73f97::t_037e2987dac8eb 9
+.gitignore
+  h_d4de67ad00ef05 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "8dca514d03cb459bc04e8eccfac89c4877360dd0",
+  "prompts": {},
+  "humans": {
+    "h_d4de67ad00ef05": {
+      "author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  },
+  "sessions": {
+    "s_da7cb4fea73f97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bfee8254-c28a-410f-af8b-24f6fa426b74",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
