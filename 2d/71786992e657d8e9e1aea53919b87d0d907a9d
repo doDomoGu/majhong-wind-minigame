@@ -1,0 +1,23 @@
+miniprogram/js/ui.js
+  s_da7cb4fea73f97::t_6dcda7db4d579a 79
+  s_da7cb4fea73f97::t_49431359007783 88-96,98-99
+  s_da7cb4fea73f97::t_15cdc620accda3 2
+miniprogram/js/platform.js
+  s_da7cb4fea73f97::t_9d6282cf68319b 128-142,147-153,155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.44-trip",
+  "base_commit_sha": "2d71786992e657d8e9e1aea53919b87d0d907a9d",
+  "prompts": {},
+  "sessions": {
+    "s_da7cb4fea73f97": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "bfee8254-c28a-410f-af8b-24f6fa426b74",
+        "model": "grok-4.6"
+      },
+      "human_author": "doDomoGu <dodomo_gu@sina.cn>"
+    }
+  }
+}
